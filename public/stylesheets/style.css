@@ -1,8 +1,154 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+/* 初始狀態：透明並往下位移 */
+.fade-lines span {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeInLine 0.8s ease forwards;
 }
 
-a {
-  color: #00B7FF;
+/* 定義淡入動畫 */
+@keyframes fadeInLine {
+  to {
+    opacity: 1;
+    transform: translateY(1);
+  }
+}
+
+/* 每一行的延遲，讓它一行行出現 */
+.fade-lines span:nth-child(1) { animation-delay: 0.5s; }
+.fade-lines span:nth-child(2) { animation-delay: 1.5s; }
+.fade-lines span:nth-child(3) { animation-delay: 2.5s; }
+.fade-lines span:nth-child(5) { animation-delay: 4.5s; }
+.fade-lines span:nth-child(6) { animation-delay: 5.5s; }
+.fade-lines span:nth-child(7) { animation-delay: 6.5s; }
+.fade-lines span:nth-child(8) { animation-delay: 7.5s; }
+.fade-lines span:nth-child(10) { animation-delay: 9.5s; }
+.fade-lines span:nth-child(11) { animation-delay: 10.5s; }
+.fade-lines span:nth-child(12) { animation-delay: 12.5s; }
+.fade-lines span:nth-child(13) { animation-delay: 13.5s; }
+
+#btn-start {
+  opacity: 0;
+  animation: fadeInLine 1s ease forwards;
+  animation-delay: 15s; /* 在最後一行後出現 */
+}
+
+body {
+  font-family: "Noto Sans TC", sans-serif;
+  background-color: #0b0b0f;
+  color: #f0f0f0;
+  margin: 0;
+  text-align: center;
+  padding: 2rem;
+}
+
+section {
+  display: none;
+}
+
+section.active {
+  display: block;
+}
+
+button {
+  background: #52b788;
+  border: none;
+  color: #0b0b0f;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 1rem;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #74c69d;
+}
+
+.kbd {
+  background: #222;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.role-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin: 2rem 0;
+}
+
+.role {
+  background: #1b1b27;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.role:hover {
+  border-color: #52b788;
+}
+
+.fade-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  margin: 2rem auto;
+  max-width: 600px;
+  text-align: left;
+}
+
+
+body {
+  font-family: "Noto Sans TC", sans-serif;
+  text-align: center;
+  background: #0b0b0f;
+  color: #f0f0f0;
+  margin: 0;
+  padding: 2rem;
+}
+
+button {
+  background: #52b788;
+  border: none;
+  color: #0b0b0f;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 1rem;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #74c69d;
+}
+
+.kbd {
+  background: #222;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.role-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin: 2rem 0;
+}
+
+.role {
+  background: #1b1b27;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.role:hover {
+  border-color: #52b788;
+}
+
+.role.selected {
+  border-color: #74c69d;
+  background: #222831;
 }
