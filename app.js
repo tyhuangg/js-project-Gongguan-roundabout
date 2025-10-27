@@ -27,6 +27,10 @@ app.get('/roles', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'roles.html'));
 });
 
+app.get('/teach', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'teach.html'));
+});
+
 // --- 錯誤處理 (optional) ---
 app.use((req, res) => {
   res.status(404).send('<h1>404 Not Found</h1>');
