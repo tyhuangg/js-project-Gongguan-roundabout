@@ -2,6 +2,8 @@ let tutoBg;
 let btnImg;
 
 let drawW, drawH;
+let drawX, drawY;
+
 let btnW, btnH;
 let btnX, btnY;
 
@@ -22,6 +24,9 @@ function setup() {
   // 按鈕大小
   btnW = 350;
   btnH = (btnImg.height / btnImg.width) * btnW;
+
+  updateBackgroundSize();
+  updateButtonPosition();
 }
 
 function draw() {
@@ -29,7 +34,10 @@ function draw() {
   drawButton();
 }
 
-function drawBackground() {
+//===========================
+// 背景 cover（置中）
+//===========================
+function updateBackgroundSize() {
   let imgRatio = tutoBg.width / tutoBg.height;
   let canvasRatio = width / height;
 
@@ -41,42 +49,58 @@ function drawBackground() {
     drawW = height * imgRatio;
   }
 
-  image(tutoBg, 0, 0, drawW, drawH);
+  // 中心對齊
+  drawX = (width - drawW) / 2;
+  drawY = (height - drawH) / 2;
+}
+
+function drawBackground() {
+  image(tutoBg, drawX, drawY, drawW, drawH);
+}
+
+//===========================
+// 按鈕
+//===========================
+function updateButtonPosition() {
+  // 用畫面比例控制位置（不再用 drawW/drawH，避免跑位）
+  btnX = width * 0.5;
+  btnY = height * 0.8;
 }
 
 function drawButton() {
-  // 按鈕位置（用背景比例決定 → 不會跑位）
-  btnX = drawW * 0.35;  
-  btnY = drawH * 0.75;
-
-  let hovered =
-    mouseX > btnX &&
-    mouseX < btnX + btnW &&
-    mouseY > btnY &&
-    mouseY < btnY + btnH;
+  let hovered = isHoveringButton();
 
   push();
-  if (hovered) {
-    scale(1.05);
-    image(btnImg, btnX / 1.05, btnY / 1.05, btnW, btnH);
-  } else {
-    image(btnImg, btnX, btnY, btnW, btnH);
-  }
+  translate(btnX, btnY);
+
+  if (hovered) scale(1.05);
+
+  imageMode(CENTER);
+  image(btnImg, 0, 0, btnW, btnH);
+
   pop();
 }
 
-function mousePressed() {
-  let hovered =
-    mouseX > btnX &&
-    mouseX < btnX + btnW &&
-    mouseY > btnY &&
-    mouseY < btnY + btnH;
+function isHoveringButton() {
+  return (
+    mouseX > btnX - btnW / 2 &&
+    mouseX < btnX + btnW / 2 &&
+    mouseY > btnY - btnH / 2 &&
+    mouseY < btnY + btnH / 2
+  );
+}
 
-  if (hovered) {
+function mousePressed() {
+  if (isHoveringButton()) {
     window.location.href = "/teach";
   }
 }
 
+//===========================
+// RWD
+//===========================
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  updateBackgroundSize();
+  updateButtonPosition();
 }

@@ -1,102 +1,102 @@
-// ================================
-// Level 1 – Pixel Collision + 黑白主地圖 + 彩色小地圖
-// ================================
+// ======================================================
+// Level 1 - Pixel Collision + 彩色主地圖 + 彩色小地圖
+// ======================================================
 
 let config = {
   type: Phaser.AUTO,
   width: window.innerWidth,
   height: window.innerHeight,
-  physics: {
-    default: "arcade",
-    arcade: { debug: false }
-  },
+  physics: { default: "arcade", arcade: { debug: false } },
   scene: { preload, create, update },
   scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
 };
 
 let game = new Phaser.Game(config);
 
-// ---- Constants ----
-const MAP_SIZE = 8000;         // 原圖大小
-//const MAP_SCALE = 0.119;        // 主地圖原圖正方形可以完整出現在畫面上
-const MAP_SCALE = 0.25;        // ⭐ 主地圖縮放倍率（1280px）
-const WORLD_SIZE = MAP_SIZE * MAP_SCALE;  // 1280
+// ----- Map 設定 -----
+let MAP_SIZE = 2048;
+const MAP_SCALE = 0.25;
+let WORLD_SIZE = MAP_SIZE * MAP_SCALE;
 
-// ---- Game Objects ----
-let player, keys;
-let minimap, miniPlayer;
-
-let speed = 0;
-let maxSpeed = 300;
-let acceleration = 0.05;
-let turnSpeed = 3;
+let player, keys, miniPlayer;
+let speed = 0, maxSpeed = 120, acceleration = 0.05, turnSpeed = 3;
 
 let positionHistory = [];
 let isInvincible = false;
 
-// ---- Pixel Collision Mask ----
+// Pixel Mask
 let maskCanvas, maskCtx;
 
+//玩家位置
+let START_X = 0;
+let START_Y = 0;
 
-// ===================
+
+// ======================================================
 // Preload
-// ===================
+// ======================================================
 function preload() {
-  // 彩色小地圖
-  this.load.image("circleMap", "/image/map/circle_map.png");
-
-  // 黑白主地圖
-  this.load.image("mask", "/image/地圖＿圓環路口/Circle_map_WB.PNG");
+  this.load.image("colorMap", "/image/map/circle_map.png");    
+  this.load.image("mask", "/image/map/Circle_map_WB.PNG");    
+  this.load.image("heart3", "/image/ui/Heart/3heart.png");
+  this.load.image("heart2", "/image/ui/Heart/2heart.png");
+  this.load.image("heart1", "/image/ui/Heart/1heart.png");
+  this.load.image("heart0", "/image/ui/Heart/noheart.png");
 }
 
 
-
-// ===================
+// ======================================================
 // Create
-// ===================
+// ======================================================
 function create() {
+
   this.cameras.main.setBackgroundColor("#000000");
 
-  //----------------------------------
-  // 1. 建立 Pixel Collision Mask (原尺寸 8000×8000)
-  //----------------------------------
+  // ----------------------------------------------------
+  // 1. 自動偵測黑白遮罩原始尺寸（最重要）
+  // ----------------------------------------------------
   const maskImg = this.textures.get("mask").getSourceImage();
+  MAP_SIZE = maskImg.width;         // = 2048
+  WORLD_SIZE = MAP_SIZE * MAP_SCALE;  // = 2048 * 0.25 = 512
 
+  // 把黑白遮罩畫到 Canvas（pixel collision）
   maskCanvas = document.createElement("canvas");
-  maskCanvas.width = maskImg.width;     // 8000
-  maskCanvas.height = maskImg.height;   // 8000
+  maskCanvas.width = MAP_SIZE;
+  maskCanvas.height = MAP_SIZE;
   maskCtx = maskCanvas.getContext("2d");
   maskCtx.drawImage(maskImg, 0, 0);
 
-  //----------------------------------
-  // 2. 主地圖（縮小後顯示）
-  //----------------------------------
-  let mainMap = this.add.image(0, 0, "mask")
+  // ----------------------------------------------------
+  // 2. 主背景（彩色地圖，與遮罩比例完全一致）
+  // ----------------------------------------------------
+  this.add.image(0, 0, "colorMap")
     .setOrigin(0, 0)
-    .setScale(MAP_SCALE)  // ⭐ 主地圖縮放
+    .setScale(MAP_SCALE)
     .setDepth(-10);
 
-  //----------------------------------
-  // 3. 左上角彩色小地圖
-  //----------------------------------
-  this.add.image(0, 0, "circleMap")
+  // ----------------------------------------------------
+  // 3. 左上角小地圖
+  // ----------------------------------------------------
+  this.add.image(0, 0, "colorMap")
     .setOrigin(0, 0)
     .setScale(0.04)
     .setScrollFactor(0)
-    .setDepth(1000);
+    .setDepth(999);
 
-  //----------------------------------
-  // 4. 世界邊界
-  //----------------------------------
+  // ----------------------------------------------------
+  // 4. 世界邊界（依照實際地圖縮放後大小）
+  // ----------------------------------------------------
   this.cameras.main.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
   this.physics.world.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
 
-  //----------------------------------
-  // 5. 玩家初始位置（縮放後）
-  //----------------------------------
+  // ----------------------------------------------------
+  // 5. 玩家出生位置
+  // ----------------------------------------------------
+  START_X = MAP_SIZE - 2000;
+  START_Y = MAP_SIZE - 200;
   player = this.add.rectangle(
-    4000 * MAP_SCALE,  // = 640
-    3000 * MAP_SCALE,  // = 480
+    START_X * MAP_SCALE,
+    START_Y * MAP_SCALE,
     80,
     40,
     0x00ff00
@@ -104,51 +104,74 @@ function create() {
   this.physics.add.existing(player);
   player.rotation = Phaser.Math.DegToRad(90);
 
-  //----------------------------------
+  // ----------------------------------------------------
   // 6. 控制鍵
-  //----------------------------------
+  // ----------------------------------------------------
   keys = this.input.keyboard.addKeys({
-    left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+    left:  Phaser.Input.Keyboard.KeyCodes.LEFT,
     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-    up: Phaser.Input.Keyboard.KeyCodes.UP,
-    down: Phaser.Input.Keyboard.KeyCodes.DOWN
+    up:    Phaser.Input.Keyboard.KeyCodes.UP,
+    down:  Phaser.Input.Keyboard.KeyCodes.DOWN,
   });
 
-  //----------------------------------
-  // 7. Camera 跟隨
-  //----------------------------------
+  // ----------------------------------------------------
+  // 7. Camera
+  // ----------------------------------------------------
   this.cameras.main.startFollow(player);
 
-  //----------------------------------
-  // 8. Minimap player indicator
-  //----------------------------------
+  // ----------------------------------------------------
+  // 8. 小綠點（小地圖玩家指示）
+  // ----------------------------------------------------
   miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
+
+  // 生命值（最多 3 顆）
+  this.hp = 3;
+
+  // 右上角顯示愛心
+  this.hpIcon = this.add.image(window.innerWidth - 50, 20, "heart3")
+  .setOrigin(1, 0)
+  .setScrollFactor(0)
+  .setDepth(9999)
+  .setScale(0.5);
+
+  // 監聽視窗縮放（維持右上角位置）
+  this.scale.on('resize', (gameSize)=>{
+    this.hpIcon.setPosition(gameSize.width - 20, 20);
+  });
+
+  this.updateHeart = () => {
+  if (this.hp >= 3) this.hpIcon.setTexture("heart3");
+  else if (this.hp == 2) this.hpIcon.setTexture("heart2");
+  else if (this.hp == 1) this.hpIcon.setTexture("heart1");
+  else this.hpIcon.setTexture("heart0");
+  };
+
 }
 
 
 
-// ===================
-// Update Loop
-// ===================
+// ======================================================
+// Update
+// ======================================================
 function update() {
-  // ---- 轉向 ----
-  if (keys.left.isDown) player.rotation -= Phaser.Math.DegToRad(turnSpeed);
+
+  // 方向
+  if (keys.left.isDown)  player.rotation -= Phaser.Math.DegToRad(turnSpeed);
   if (keys.right.isDown) player.rotation += Phaser.Math.DegToRad(turnSpeed);
 
-  // ---- 速度 ----
-  let targetSpeed = keys.up.isDown
-    ? maxSpeed
-    : keys.down.isDown
-      ? 0
-      : speed * 0.95;
+  // 加速 / 慣性
+  let targetSpeed =
+    keys.up.isDown ? maxSpeed :
+    keys.down.isDown ? 0 :
+    speed * 0.95;
 
   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
 
-  // ---- 計算下一個位置（縮放後）
+  // 預測下一個位置（縮放後座標）
   let nextX = player.x + Math.cos(player.rotation) * speed;
   let nextY = player.y + Math.sin(player.rotation) * speed;
 
-  // ⭐ Pixel collision 使用「原始座標」
+  // Pixel collision（轉回原圖座標）
   let maskX = nextX / MAP_SCALE;
   let maskY = nextY / MAP_SCALE;
 
@@ -161,7 +184,7 @@ function update() {
     );
   }
 
-  // ---- 保存歷史位置（for backtracking）
+  // 保存位置（倒退用）
   positionHistory.push({
     x: player.x,
     y: player.y,
@@ -169,50 +192,73 @@ function update() {
   });
   if (positionHistory.length > 60) positionHistory.shift();
 
-  // ---- 更新小地圖的車子位置 ----
+  // 小地圖更新
   miniPlayer.x = 100 + (player.x / WORLD_SIZE) * 100;
   miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
 }
 
 
-
-// ===================
-// Pixel Collision Core
-// ===================
+// ======================================================
+// Pixel Collision
+// ======================================================
 function isRoad(x, y) {
-  if (!maskCtx) return false;
-  let d = maskCtx.getImageData(x, y, 1, 1).data;
-  return d[0] > 200 && d[1] > 200 && d[2] > 200;  // 白色 = 可走
+  if (!maskCtx) return true;
+  let p = maskCtx.getImageData(x, y, 1, 1).data;
+  let brightness = (p[0] + p[1] + p[2]) / 3;
+  return brightness > 128;  // 0~255 的中間值
 }
 
 
-
-// ===================
-// 撞牆：退回上一個位置
-// ===================
+// ======================================================
+// 撞牆：回到上一個安全位置
+// ======================================================
 function hitWallPixel(player) {
+  const scene = player.scene;
+
   if (isInvincible) return;
 
   speed = 0;
   isInvincible = true;
 
-  if (positionHistory.length > 10) {
-    let past = positionHistory[0];
-    player.x = past.x;
-    player.y = past.y;
-    player.rotation = past.rotation;
-    player.body.reset(past.x, past.y);
+  // 扣一滴血
+  scene.hp--;
+  scene.updateHeart();
+
+  // 檢查是否死亡
+  if (scene.hp <= 0) {
+
+    // 回到初始位置
+    player.x = START_X * MAP_SCALE;
+    player.y = START_Y * MAP_SCALE;
+    player.rotation = Phaser.Math.DegToRad(90);
+    player.body.reset(player.x, player.y);
+
+    // 重置 HP
+    scene.hp = 3;
+    scene.updateHeart();
+
+  } else {
+
+    // 正常撞牆 → 回溯到上一個安全位置
+    if (positionHistory.length > 10) {
+      let past = positionHistory[0];
+      player.x = past.x;
+      player.y = past.y;
+      player.rotation = past.rotation;
+      player.body.reset(past.x, past.y);
+    }
   }
 
-  // 閃爍效果
-  player.scene.tweens.add({
+  // 閃爍
+  scene.tweens.add({
     targets: player,
     alpha: 0,
     duration: 80,
-    yoyo: true
+    yoyo: true,
+    repeat: 2
   });
 
-  player.scene.time.delayedCall(300, () => {
+  scene.time.delayedCall(300, () => {
     isInvincible = false;
   });
 }
