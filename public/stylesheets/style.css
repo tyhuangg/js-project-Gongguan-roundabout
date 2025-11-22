@@ -6,6 +6,9 @@
   display: grid;
   place-items: center;
   overflow: hidden; 
+  background-image: url("/image/bg/hero.jpg"); /* 確保圖放在 /public/assets/img/hero.jpg */
+  background-size: cover;
+  background-position: center;
   background-repeat: no-repeat;
   margin:0;
   padding:0;
@@ -19,22 +22,159 @@ html, body {
   padding: 0;
 }
 
+
 /* 文案頁 */
 #intro {
-  position: relative;
   width: 100%;
   height: 100vh;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  transition: opacity 0.6s ease;
+
+  /*背景圖設定*/
+  background-image: url("/image/bg/intro.jpg");
+  background-size: cover;       /* 圖片自動放大到滿版 */
+  background-position: center;  /* 置中對齊 */
+  background-repeat: no-repeat; /* 不重複鋪滿 */
 }
 
+/* 文案文字設定 */
+.intro { position: relative; } /* 確保絕對定位用這層當參考 */
+
+/* 文案標題 */
+.title-abs{
+  position:absolute;
+  top:10vh;
+  left:5vw;
+  margin:0;
+  line-height:1.4;
+  z-index:1;
+  letter-spacing:5px;
+
+  white-space: nowrap;
+  width:auto;
+  max-width:none;
+
+  font-size: 50px;   
+  font-weight:700;
+  color:#ffffff;
+  font-family:"Noto Sans TC",sans-serif;
+}
+
+/* 文案內文設定 */
+.fade-lines {
+  position: absolute;
+  top: 20vh;
+  left: 5vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  max-width: 1000px;
+  text-align: left;
+  z-index:1;
+  font-size: 25px; 
+  color: #f0f0f0;
+}
+
+/* 文案內文fadein */
+/* 顯示/隱藏開關維持不變 */
+.hidden { display: none; }
+.active { display: flex; }
+
+/* 初始狀態：透明並往下位移 */
+.fade-lines span {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeInLine 0.8s ease forwards;
+}
+
+/* 定義淡入動畫 */
+@keyframes fadeInLine {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 每一行的延遲，讓它一行行出現 */
+.fade-lines span:nth-child(1)  { animation-delay: 0.5s; }
+.fade-lines span:nth-child(2)  { animation-delay: 1.5s; }
+.fade-lines span:nth-child(3)  { animation-delay: 2.5s; }
+.fade-lines span:nth-child(4)  { animation-delay: 3.5s; }
+.fade-lines span:nth-child(5)  { animation-delay: 4.5s; }
+.fade-lines span:nth-child(6)  { animation-delay: 5.5s; }
+.fade-lines span:nth-child(7)  { animation-delay: 6.5s; }
+.fade-lines span:nth-child(8)  { animation-delay: 7.5s; }
+.fade-lines span:nth-child(9)  { animation-delay: 8.5s; }
+.fade-lines span:nth-child(10) { animation-delay: 9.5s; }
+.fade-lines span:nth-child(11) { animation-delay: 10.5s; }
+.fade-lines span:nth-child(12) { animation-delay: 11.5s; }
+.fade-lines span:nth-child(13) { animation-delay: 12.5s; }
+
+/* 文案按鈕設定 */
+#btn-to-tutorial {
+  opacity: 0;
+  animation: fadeInLine 1s ease forwards;
+  /* animation-delay: 15s; */
+  position: absolute;
+  top: 35vh;
+  left: 62vw;
+  background: none;       /* 不要原本的綠色背景 */
+  border: none;           /* 拿掉邊框 */
+  padding: 0;
+  cursor: pointer;
+}
+
+#btn-to-tutorial img {
+  width: 452px;           /* 圖片寬度 */
+  height: auto;           /* 自動等比例 */
+  transition: transform 0.2s ease;
+}
+
+#btn-to-tutorial:hover img {
+  transform: scale(1.05); /* 滑過放大一點 */
+}
+
+
 /* 教學頁 */
-#tutorial {
-  position: relative;
+.page-tutorial {
   width: 100%;
   height: 100vh;
-  overflow: hidden;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  transition: opacity 0.6s ease;
+
+  /*背景圖設定*/
+  background-image: url("/image/bg/tutorial.jpg");
+  background-size: cover;       /* 圖片自動放大到滿版 */
+  background-position: center;  /* 置中對齊 */
+  background-repeat: no-repeat; /* 不重複鋪滿 */
+}
+
+/* 教學頁按鈕設定 */
+#btn-to-teach {
+  opacity: 0;
+  animation: fadeInLine 1s ease forwards;
+  /* animation-delay: 15s; */
+  position: absolute;
+  top: 75vh;
+  left: 38.5vw;
+  background: none;       /* 不要原本的綠色背景 */
+  border: none;           /* 拿掉邊框 */
   padding: 0;
+  cursor: pointer;
+}
+
+#btn-to-teach img {
+  width: 452px;           /* 圖片寬度 */
+  height: auto;           /* 自動等比例 */
+  transition: transform 0.2s ease;
+}
+
+#btn-to-teach:hover img {
+  transform: scale(1.05); /* 滑過放大一點 */
 }

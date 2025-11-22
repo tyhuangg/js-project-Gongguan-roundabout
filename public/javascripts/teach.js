@@ -88,8 +88,7 @@ function create() {
     const btn = document.getElementById('endBtn');
     btn.style.display = 'block';
     btn.addEventListener('click', () => {
-      window.location.href = "/select"
-      //alert("體驗結束"); // 或者 window.close() 視瀏覽器環境
+      alert("體驗結束"); // 或者 window.close() 視瀏覽器環境
     });
   }, 30000);
 }
