@@ -4,19 +4,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>操作教學｜公館圓環 2D 駕駛體驗</title>
+  <title>操作教學</title>
+
   <link rel="stylesheet" href="/stylesheets/style.css">
-  <script src="/javascripts/tutorial.js" defer></script>
+
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+  <!-- 新的 p5 教學頁腳本 -->
+  <script src="/javascripts/p5-tutorial.js" defer></script>
 </head>
 
 <body>
-  <main class="page page-tutorial">
-    <div class="button">
-      <button id="btn-to-teach">
-        <img src="/image/ui/start_teach.png" />
-      </button>
-    </div>
-  </main>
+  <!-- 教學頁變成 p5 用的容器 -->
+  <main id="tutorial"></main>
 </body>
 
 </html>

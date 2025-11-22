@@ -1,27 +1,28 @@
-let targetW = 1920;
-let targetH = 1200;
+let tutoBg;
+let drawW, drawH;
 
 let carImgs = [];
 let carButtons = [];
 let selectedIndex = -1;
+
+
+let scaleFactor = 1;
 
 // 三台車名字（顯示用，可改成你要的）
 const carNames = ["公車", "汽車", "機車"];
 
 function preload() {
   // 從 Express 靜態根目錄載圖：/image/....
-  carImgs[0] = loadImage("/images/car/car1.png");
-  carImgs[1] = loadImage("/images/car/car2.png");
-  carImgs[2] = loadImage("/images/car/car3.png");
+  carImgs[0] = loadImage("/image/car/car1.png");
+  carImgs[1] = loadImage("/image/car/car2.png");
+  carImgs[2] = loadImage("/image/car/car3.png");
+
+tutoBg = loadImage("/image/bg/Background_Frame3_11_12_13_14.png");
 }
 
 function setup() {
-  // 你原本的比例寫法
-  createCanvas(
-    windowWidth - 400,
-    ((windowWidth - 400) / targetW) * targetH
-  );
-
+  createCanvas(windowWidth, windowHeight);
+ 
   // 按鈕大小
   const btnW = 220;
   const btnH = 220;
@@ -59,6 +60,8 @@ function setup() {
 
 function draw() {
   background(230); // 如果你要透明就改成 clear();
+  drawBackground();
+
 
   // 標題
   fill(0);
@@ -103,8 +106,28 @@ function draw() {
   text(msg, width / 2, height - 180);
 }
 
+
 function mousePressed() {
   for (let btn of carButtons) {
     btn.handleClick();
   }
+}
+function drawBackground() {
+  let imgRatio = tutoBg.width / tutoBg.height;
+  let canvasRatio = width / height;
+
+  if (canvasRatio > imgRatio) {
+    drawW = width;
+    drawH = width / imgRatio;
+  } else {
+    drawH = height;
+    drawW = height * imgRatio;
+  }
+
+  image(tutoBg, 0, 0, drawW, drawH);
+}
+
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
