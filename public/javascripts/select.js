@@ -13,9 +13,9 @@ const carNames = ["公車", "汽車", "機車"];
 
 function preload() {
   // 從 Express 靜態根目錄載圖：/image/....
-  carImgs[0] = loadImage("/image/car/car1.png");
-  carImgs[1] = loadImage("/image/car/car2.png");
-  carImgs[2] = loadImage("/image/car/car3.png");
+  carImgs[0] = loadImage("/image/car_side/car1.png");
+  carImgs[1] = loadImage("/image/car_side/car2.png");
+  carImgs[2] = loadImage("/image/car_side/car3.png");
 
 tutoBg = loadImage("/image/bg/Background_Frame3_11_12_13_14.png");
 }
