@@ -3,8 +3,9 @@ let drawW, drawH;
 
 let carImgs = [];
 let carButtons = [];
+let confirmationImgs;
 let selectedIndex = -1;
-
+let selectcar;
 
 let scaleFactor = 1;
 
@@ -13,16 +14,17 @@ const carNames = ["公車", "汽車", "機車"];
 
 function preload() {
   // 從 Express 靜態根目錄載圖：/image/....
-  carImgs[0] = loadImage("/image/car_side/car1.png");
-  carImgs[1] = loadImage("/image/car_side/car2.png");
-  carImgs[2] = loadImage("/image/car_side/car3.png");
+  carImgs[0] = loadImage("/image/car_side/bus_side.png");
+  carImgs[1] = loadImage("/image/car_side/car_side.png");
+  carImgs[2] = loadImage("/image/car_side/scooter_side.png");
+  confirmationImgs = loadImage("/image/ui/next.png");
 
-tutoBg = loadImage("/image/bg/Background_Frame3_11_12_13_14.png");
+  tutoBg = loadImage("/image/bg/Background_Frame3_11_12_13_14.png");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
- 
+
   // 按鈕大小
   const btnW = 220;
   const btnH = 220;
@@ -37,6 +39,9 @@ function setup() {
     const x = startX + i * (btnW + spacing);
     const img = carImgs[i];
 
+
+
+
     const index = i; // 關閉範圍用
     //建立按鈕(建構函式)
     const btn = new ImageButton(
@@ -49,14 +54,32 @@ function setup() {
       () => {
         selectedIndex = index;
         console.log("選擇車子：", carNames[index]);
+        selectcar = carNames[index];
+        btn2.visible = true; // 顯示按鈕 2
+        carButtons.push(btn2);
       }
     );
+    let btn2 = new ImageButton(
+      windowWidth / 2 - 100,
+      windowHeight - 100,
+      200,
+      50,
+      confirmationImgs,
+      null,
+      () => {
+        alert(`"選擇車子：${selectcar}`);
+      }
+    )
+    btn2.visible = false;  // 隱藏
+
 
     carButtons.push(btn);
+
   }
 
   textAlign(CENTER, CENTER);
 }
+
 
 function draw() {
   background(230); // 如果你要透明就改成 clear();
@@ -64,7 +87,7 @@ function draw() {
 
 
   // 標題
-  fill(0);
+  fill(255);
   textSize(32);
   noStroke();
   text("選擇你的車子", width / 2, 80);
@@ -77,7 +100,7 @@ function draw() {
     btn.draw();
 
     // 在下面寫車名
-    fill(0);
+    fill(255);
     noStroke();
     textSize(20);
     text(
@@ -96,7 +119,7 @@ function draw() {
   }
 
   // 畫底部說明
-  fill(0);
+  fill(255);
   textSize(20);
   noStroke();
   let msg = "目前尚未選擇車子";
@@ -111,6 +134,9 @@ function mousePressed() {
   for (let btn of carButtons) {
     btn.handleClick();
   }
+
+  btn2.handleClick();
+
 }
 function drawBackground() {
   let imgRatio = tutoBg.width / tutoBg.height;
