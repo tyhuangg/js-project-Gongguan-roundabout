@@ -149,7 +149,6 @@ function create() {
 }
 
 
-
 // ======================================================
 // Update
 // ======================================================
@@ -258,7 +257,7 @@ function hitWallPixel(player) {
     repeat: 2
   });
 
-  scene.time.delayedCall(300, () => {
+  scene.time.delayedCall(1000, () => {
     isInvincible = false;
   });
 }
