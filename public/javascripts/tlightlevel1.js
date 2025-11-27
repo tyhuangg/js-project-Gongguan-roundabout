@@ -28,11 +28,15 @@ let isInvincible = false;
 let maskCanvas, maskCtx;
 
 //玩家位置
-let START_X = 0;
-let START_Y = 0;
+let playerX = 0;
+let playerY = 0;
 
 // 兩道紅燈牆
 let trafficLights = [];
+
+//NPC
+let box;
+const CAR_ANGLE_OFFSET = Phaser.Math.DegToRad(90);   // 車頭原本朝左，要翻到朝右
 
 // ======================================================
 // Preload
@@ -44,6 +48,8 @@ function preload() {
   this.load.image("heart2", "/image/ui/Heart/2heart.png");
   this.load.image("heart1", "/image/ui/Heart/1heart.png");
   this.load.image("heart0", "/image/ui/Heart/noheart.png");
+  this.load.image("npcBus", "/image/npc_car_top/npc_bus_top.png");
+  this.load.image("npcScooter", "/image/npc_car_top/npc_scooter_top.png");
 }
 
 // ======================================================
@@ -92,13 +98,52 @@ function create() {
   this.physics.world.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
 
   // ----------------------------------------------------
+  //  NPC試放區
+  // ----------------------------------------------------
+  startX = MAP_SIZE - 2000;
+  startY = MAP_SIZE - 200;
+
+
+
+  let npcPos = mapToWorld(4823, 7735);  // NPC 初始位置
+
+  box = this.add.image(npcPos.x, npcPos.y, "npcBus");
+  box.setOrigin(0.5, 0.5);     // 車頭中心點
+  box.setScale(0.05);           // 縮放 (依圖片大小調整)
+  
+  this.physics.add.existing(box);
+
+  let npcSpeed = 60;
+  box.npcSpeed = npcSpeed;
+
+  box.waypoints = makeWaypointList([
+    { x: 4600, y: 6714 },
+    { x: 4699, y: 5249 },
+    { x: 5222, y: 4270 },
+    { x: 5243, y: 3640 },
+    { x: 4960, y: 2994 },
+    { x: 4497, y: 2644 },
+    { x: 2421, y: 1743 },
+    { x: 784, y: 0 },
+  ]);
+  box.currentPoint = 0;
+
+  let firstTarget = box.waypoints[0];
+  box.rotation = Phaser.Math.Angle.Between(box.x, box.y, firstTarget.x, firstTarget.y)+ CAR_ANGLE_OFFSET;
+
+  moveNPCToNextPoint();
+
+  box.stopForRedLight = false;
+
+  
+  // ----------------------------------------------------
   // 5. 玩家出生位置
   // ----------------------------------------------------
-  START_X = MAP_SIZE - 2000;
-  START_Y = MAP_SIZE - 200;
-  player = this.add.rectangle(START_X * MAP_SCALE, START_Y * MAP_SCALE, 80, 40, 0x00ff00);
+  player = this.add.rectangle(startX * MAP_SCALE, startY * MAP_SCALE, 80, 40, 0x00ff00);
   this.physics.add.existing(player);
   player.rotation = Phaser.Math.DegToRad(90);
+
+  this.physics.add.collider(player, box, onPlayerHitNPC, null, this);
 
   // ----------------------------------------------------
   // 6. 控制鍵
@@ -189,7 +234,157 @@ function update() {
   // 紅燈牆 HUD 更新
   // ----------------------------------------------------
   updateTrafficHUD();
+
+  // ----------------------------------------------------
+  // NPC移動測試區
+  // ----------------------------------------------------
+  if (box && box.body) {
+    // --------- 紅燈偵測 ---------
+    let npcNearRed = false;
+
+    trafficLights.forEach(light => {
+        if (light.state === 'red') {
+            light.rects.forEach(rect => {
+                let dx = rect.x - box.x;
+                let dy = rect.y - box.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < 60) {   // NPC 靠近紅燈牆
+                    npcNearRed = true;
+                }
+            });
+        }
+    });
+
+    if (npcNearRed) {
+        box.stopForRedLight = true;
+        box.body.setVelocity(0, 0);
+        return; // 不繼續走路，直接跳出
+    } else if (box.stopForRedLight) {
+        box.stopForRedLight = false;
+        moveNPCToNextPoint(); // 綠燈後繼續走
+    }
+
+    let target = box.waypoints[box.currentPoint];
+
+    let dx = target.x - box.x;
+    let dy = target.y - box.y;
+    let dist = Math.sqrt(dx * dx + dy * dy);
+
+    let targetAngle = Phaser.Math.Angle.Between(box.x, box.y, target.x, target.y);
+    let correctedAngle = targetAngle + CAR_ANGLE_OFFSET;
+    box.rotation = Phaser.Math.Angle.RotateTo(box.rotation, correctedAngle, 0.01);
+
+    box.body.setVelocity(
+        Math.cos(targetAngle) * box.npcSpeed,
+        Math.sin(targetAngle) * box.npcSpeed
+    );
+
+    if (dist < 10) {
+        // 停止
+        box.body.setVelocity(0, 0);
+        box.body.reset(target.x, target.y);
+
+        // 下一個點
+        box.currentPoint++;
+
+        // 檢查是否還有下一個點
+        if (box.currentPoint < box.waypoints.length) {
+            moveNPCToNextPoint();   // 再出發！
+        }
+    }
+  }
 }
+
+// ======================================================
+// NPC產生器
+// ======================================================
+
+class NPC {
+    constructor(scene, x, y, texture, speed, waypoints) {
+        this.scene = scene;
+
+        this.sprite = scene.add.image(x, y, texture)
+            .setOrigin(0.5, 0.5)
+            .setScale(0.05);
+
+        scene.physics.add.existing(this.sprite);
+
+        this.speed = speed;
+        this.waypoints = waypoints;
+        this.currentPoint = 0;
+
+        this.stopForRedLight = false;
+
+        // 初始朝向
+        let target = this.waypoints[0];
+        let targetAngle = Phaser.Math.Angle.Between(x, y, target.x, target.y);
+        this.sprite.rotation = targetAngle + CAR_ANGLE_OFFSET;
+    }
+
+    update() {
+        if (!this.sprite.body) return;
+
+        // 紅燈檢查
+        let npcNearRed = false;
+
+        trafficLights.forEach(light => {
+            if (light.state === 'red') {
+                light.rects.forEach(rect => {
+                    let dx = rect.x - this.sprite.x;
+                    let dy = rect.y - this.sprite.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < 60) npcNearRed = true;
+                });
+            }
+        });
+
+        if (npcNearRed) {
+            this.stopForRedLight = true;
+            this.sprite.body.setVelocity(0, 0);
+            return;
+        } 
+        else if (this.stopForRedLight) {
+            this.stopForRedLight = false;
+        }
+
+        let target = this.waypoints[this.currentPoint];
+
+        let dx = target.x - this.sprite.x;
+        let dy = target.y - this.sprite.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        let targetAngle = Phaser.Math.Angle.Between(
+            this.sprite.x, 
+            this.sprite.y, 
+            target.x, 
+            target.y
+        );
+        let correctedAngle = targetAngle + CAR_ANGLE_OFFSET;
+
+        this.sprite.rotation = Phaser.Math.Angle.RotateTo(
+            this.sprite.rotation, correctedAngle, 0.01
+        );
+
+        this.sprite.body.setVelocity(
+            Math.cos(targetAngle) * this.speed,
+            Math.sin(targetAngle) * this.speed
+        );
+
+        // 抵達下一個點
+        if (dist < 10) {
+            this.sprite.body.setVelocity(0, 0);
+            this.sprite.body.reset(target.x, target.y);
+            this.currentPoint++;
+
+            if (this.currentPoint >= this.waypoints.length) {
+                this.currentPoint = 0; // 循環
+            }
+        }
+    }
+}
+
 
 // ======================================================
 // 判斷是否可通行（Pixel Collision）
@@ -216,8 +411,8 @@ function hitWallPixel(player) {
 
   if (scene.hp <= 0) {
     // 死亡回出生點
-    player.x = START_X * MAP_SCALE;
-    player.y = START_Y * MAP_SCALE;
+    player.x = startX * MAP_SCALE;
+    player.y = startY * MAP_SCALE;
     player.rotation = Phaser.Math.DegToRad(90);
     player.body.reset(player.x, player.y);
     scene.hp = 3;
@@ -304,3 +499,66 @@ function updateTrafficHUD() {
     obj.hud.fillColor = obj.state === 'red' ? 0xff0000 : 0x00ff00;
   });
 }
+
+// ======================================================
+// NPC移動邏輯
+// ======================================================
+function moveNPCToNextPoint() {
+  let target = box.waypoints[box.currentPoint];
+  box.body.setVelocity(0, 0);
+}
+
+// ======================================================
+// 座標轉換
+// ======================================================
+
+function makeWaypointList(list) {
+    return list.map(p => mapToWorld(p.x, p.y));
+}
+
+function mapToWorld(px, py) {
+    return {
+        x: px * MAP_SCALE,
+        y: py * MAP_SCALE
+    };
+}
+
+function onPlayerHitNPC(player, npc) {
+    const scene = player.scene;
+
+    if (isInvincible) return;
+
+    // 扣血
+    scene.hp--;
+    scene.updateHeart();
+
+    // 撞 NPC 跟撞牆一樣：給無敵時間
+    isInvincible = true;
+
+    // 撞到時閃爍
+    scene.tweens.add({
+        targets: player,
+        alpha: 0,
+        duration: 80,
+        yoyo: true,
+        repeat: 3
+    });
+
+    // 無敵1秒
+    scene.time.delayedCall(1000, () => {
+        isInvincible = false;
+    });
+
+    // 如果血歸0 → 回出生點
+    if (scene.hp <= 0) {
+        player.x = startX * MAP_SCALE;
+        player.y = startY * MAP_SCALE;
+        player.rotation = Phaser.Math.DegToRad(90);
+        player.body.reset(player.x, player.y);
+
+        scene.hp = 3;
+        scene.updateHeart();
+    }
+  }
+
+
