@@ -42,6 +42,7 @@ function preload() {
   this.load.image("heart2", "/image/ui/Heart/2heart.png");
   this.load.image("heart1", "/image/ui/Heart/1heart.png");
   this.load.image("heart0", "/image/ui/Heart/noheart.png");
+  this.load.image("arrow", "/image/ui/Arrow.png"); //arrow
 }
 
 
@@ -122,7 +123,13 @@ function create() {
   // ----------------------------------------------------
   // 8. 小綠點（小地圖玩家指示）
   // ----------------------------------------------------
-  miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
+  // miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
+  miniPlayer = this.add.image(100, 100, "arrow")
+    .setScrollFactor(0)
+    .setDepth(1000)
+    .setScale(0.08)        // 小地圖箭頭大小
+    .setOrigin(0.5, 0.5);  // 讓旋轉以中心點
+
 
   // 生命值（最多 3 顆）
   this.hp = 3;
@@ -194,6 +201,8 @@ function update() {
   // 小地圖更新
   miniPlayer.x = 100 + (player.x / WORLD_SIZE) * 100;
   miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
+  //// miniPlayer.rotation = player.rotation;
+  miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
 }
 
 
