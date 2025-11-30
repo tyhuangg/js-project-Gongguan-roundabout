@@ -31,6 +31,12 @@ let maskCanvas, maskCtx;
 let START_X = 0;
 let START_Y = 0;
 
+// 兩道紅燈牆
+let trafficLights = [];
+
+//NPC
+const CAR_ANGLE_OFFSET = Phaser.Math.DegToRad(90);
+
 
 // ======================================================
 // Preload
@@ -43,6 +49,9 @@ function preload() {
   this.load.image("heart1", "/image/ui/Heart/1heart.png");
   this.load.image("heart0", "/image/ui/Heart/noheart.png");
   this.load.image("arrow", "/image/ui/Arrow.png"); //arrow
+  this.load.image("npcBus", "/image/npc_car_top/npc_bus_top.png");
+  this.load.image("npcCar", "/image/npc_car_top/npc_car_top.png");
+  this.load.image("npcScooter", "/image/npc_car_top/npc_scooter_top.png");
 }
 
 
@@ -50,6 +59,7 @@ function preload() {
 // Create
 // ======================================================
 function create() {
+  const scene = this;
 
   this.cameras.main.setBackgroundColor("#000000");
 
@@ -91,7 +101,78 @@ function create() {
   this.physics.world.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
 
   // ----------------------------------------------------
-  // 5. 玩家出生位置
+  // 5. NPCs
+  // ----------------------------------------------------
+  let bus1 = spawnNPC(
+    this,
+    4823, 7735,
+    "npcBus",
+    60,
+    [
+      { x: 4600, y: 6714 },
+      { x: 4699, y: 5249 },
+      { x: 5222, y: 4270 },
+      { x: 5243, y: 3640 },
+      { x: 4960, y: 2994 },
+      { x: 4497, y: 2644 },
+      { x: 2421, y: 1743 },
+      { x: 784, y: 0 }
+    ]
+  );
+
+  let car1 = spawnNPC(
+    this,
+    5066, 7796,
+    "npcCar",
+    60,
+    [
+      { x: 4793, y: 6572 },
+      { x: 4869, y: 5946 },
+      { x: 5010, y: 5306 },
+      { x: 5267, y: 4965 },
+      { x: 5855, y: 4495 },
+      { x: 6320, y: 4324 },
+      { x: 8000, y: 4019 },
+    ]
+  );
+
+  let scooter1 = spawnNPC(
+    this,
+    5535, 7724,
+    "npcScooter",
+    60,
+    [
+      { x: 5224, y: 6457 },
+      { x: 5147, y: 5915 },
+      { x: 5443, y: 4498 },
+      { x: 5489, y: 4212 },
+      { x: 4889, y: 2508 },
+      { x: 4038, y: 2169 },
+      { x: 2195, y: 1225 },
+      { x: 1073, y: 0 }
+    ]
+  );
+
+  let scooter2 = spawnNPC(
+    this,
+    8000, 2925,
+    "npcScooter",
+    65,
+    [
+      { x: 5633, y: 3330 },
+      { x: 4810, y: 2831 },
+      { x: 3603, y: 2510 },
+      { x: 2658, y: 2963 },
+      { x: 2298, y: 3587 },
+      { x: 1849, y: 4125 },
+      { x: 2341, y: 5254 },
+      { x: 3704, y: 6408 },
+      { x: 4209, y: 8000 }
+    ]
+  );
+
+  // ----------------------------------------------------
+  // 6. 玩家出生位置
   // ----------------------------------------------------
   START_X = MAP_SIZE - 2000;
   START_Y = MAP_SIZE - 200;
@@ -105,8 +186,12 @@ function create() {
   this.physics.add.existing(player);
   player.rotation = Phaser.Math.DegToRad(90);
 
+  for (let npc of npcs) {
+    this.physics.add.collider(player, npc.sprite, onPlayerHitNPC, null, this);
+  }
+
   // ----------------------------------------------------
-  // 6. 控制鍵
+  // 7. 控制鍵
   // ----------------------------------------------------
   keys = this.input.keyboard.addKeys({
     left:  Phaser.Input.Keyboard.KeyCodes.LEFT,
@@ -116,12 +201,12 @@ function create() {
   });
 
   // ----------------------------------------------------
-  // 7. Camera
+  // 8. Camera
   // ----------------------------------------------------
   this.cameras.main.startFollow(player);
 
   // ----------------------------------------------------
-  // 8. 小綠點（小地圖玩家指示）
+  // 9. 小地圖玩家指示箭頭
   // ----------------------------------------------------
   // miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
   miniPlayer = this.add.image(100, 100, "arrow")
@@ -131,28 +216,35 @@ function create() {
     .setOrigin(0.5, 0.5);  // 讓旋轉以中心點
 
 
-  // 生命值（最多 3 顆）
+  // ----------------------------------------------------
+  // 10. 生命值
+  // ----------------------------------------------------
   this.hp = 3;
-
-  // 右上角顯示愛心
   this.hpIcon = this.add.image(window.innerWidth - 50, 20, "heart3")
   .setOrigin(1, 0)
   .setScrollFactor(0)
   .setDepth(9999)
   .setScale(0.5);
 
-  // 監聽視窗縮放（維持右上角位置）
+  // 監聽視窗縮放
   this.scale.on('resize', (gameSize)=>{
     this.hpIcon.setPosition(gameSize.width - 20, 20);
   });
 
   this.updateHeart = () => {
-  if (this.hp >= 3) this.hpIcon.setTexture("heart3");
-  else if (this.hp == 2) this.hpIcon.setTexture("heart2");
-  else if (this.hp == 1) this.hpIcon.setTexture("heart1");
-  else this.hpIcon.setTexture("heart0");
+    if (this.hp >= 3) this.hpIcon.setTexture("heart3");
+    else if (this.hp == 2) this.hpIcon.setTexture("heart2");
+    else if (this.hp == 1) this.hpIcon.setTexture("heart1");
+    else this.hpIcon.setTexture("heart0");
   };
 
+  // ----------------------------------------------------
+  // 12. 紅燈牆
+  // ----------------------------------------------------
+  this.graphics = this.add.graphics();
+  //建立兩道紅燈牆（可分別設定紅綠燈時間）
+  createTrafficLightApprox.call(this, 1370, 1559, 1084, 1651, 15, 5000, 3000); // 第一道
+  createTrafficLightApprox.call(this, 414, 1318, 488, 1461, 15, 7000, 2000);  // 第二道
 }
 
 
@@ -160,6 +252,7 @@ function create() {
 // Update
 // ======================================================
 function update() {
+  const scene = player.scene;
 
   // 方向
   if (keys.left.isDown)  player.rotation -= Phaser.Math.DegToRad(turnSpeed);
@@ -203,11 +296,116 @@ function update() {
   miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
   //// miniPlayer.rotation = player.rotation;
   miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
+
+  // 紅燈牆 HUD 更新
+  updateTrafficHUD();
+
+  // NPC 更新
+  for (let npc of npcs) {
+      npc.update();
+  }
 }
 
+// ======================================================
+// NPC產生器
+// ======================================================
+class NPC {
+    constructor(scene, worldX, worldY, texture, speed, waypoints) {
+        this.scene = scene;
+        this.startX = worldX;
+        this.startY = worldY;
+
+        this.sprite = scene.add.image(worldX, worldY, texture)
+            .setOrigin(0.5, 0.5)
+            .setScale(0.05);
+
+        scene.physics.add.existing(this.sprite);
+        this.sprite.body.setCircle(10);       // ← 用圓形碰撞更適合車類
+        this.sprite.body.setOffset(
+            this.sprite.width/2 - 10,
+            this.sprite.height/2 - 10
+        );
+
+        this.speed = speed;
+        this.waypoints = waypoints;
+        this.currentPoint = 0;
+
+        // 初始朝向
+        let target = this.waypoints[0];
+        let targetAngle = Phaser.Math.Angle.Between(worldX, worldY, target.x, target.y);
+        this.sprite.rotation = targetAngle + CAR_ANGLE_OFFSET;
+
+        this.stopForRedLight = false;
+    }
+
+    update() {
+        if (!this.sprite.body) return;
+
+        // 紅燈檢查
+        let npcNearRed = false;
+        trafficLights.forEach(light => {
+            if (light.state === 'red') {
+                light.rects.forEach(rect => {
+                    let dx = rect.x - this.sprite.x;
+                    let dy = rect.y - this.sprite.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < 60) npcNearRed = true;
+                });
+            }
+        });
+
+        if (npcNearRed) {
+            this.stopForRedLight = true;
+            this.sprite.body.setVelocity(0, 0);
+        } 
+        else {
+          this.stopForRedLight = false;
+
+          let target = this.waypoints[this.currentPoint];
+          let dx = target.x - this.sprite.x;
+          let dy = target.y - this.sprite.y;
+          let dist = Math.sqrt(dx*dx + dy*dy);
+
+          let baseAngle = Phaser.Math.Angle.Between(this.sprite.x, this.sprite.y, target.x, target.y);
+          this.sprite.rotation = Phaser.Math.Angle.RotateTo(
+              this.sprite.rotation,
+              baseAngle + CAR_ANGLE_OFFSET,
+              0.02
+          );
+
+          this.sprite.body.setVelocity(
+              Math.cos(baseAngle) * this.speed,
+              Math.sin(baseAngle) * this.speed
+          )
+          // 抵達下一個點
+          if (dist < 10) {
+              this.sprite.body.setVelocity(0, 0);
+              this.sprite.body.reset(target.x, target.y);
+              this.currentPoint++;
+
+              if (this.currentPoint >= this.waypoints.length) {
+                  // 瞬間跳回起始位置
+                  this.sprite.body.setVelocity(0, 0);
+                  this.sprite.body.reset(this.startX, this.startY);
+
+                  // 重跑路線
+                  this.currentPoint = 0;
+
+                  // 重新朝向第一個目標
+                  let first = this.waypoints[0];
+                  let angle = Phaser.Math.Angle.Between(this.startX, this.startY, first.x, first.y);
+                  this.sprite.rotation = angle + CAR_ANGLE_OFFSET;
+
+                  return; // 這幀結束
+              }
+          }
+        }
+    }
+}
 
 // ======================================================
-// Pixel Collision
+// 判斷是否可通行（Pixel Collision）
 // ======================================================
 function isRoad(x, y) {
   if (!maskCtx) return true;
@@ -271,926 +469,146 @@ function hitWallPixel(player) {
   });
 }
 
-
-// ================================
-// Level 1 – Pixel Collision +彩色小地圖 + 黑白主地圖
-// ================================
-
-// let config = {
-//   type: Phaser.AUTO,
-//   width: window.innerWidth,
-//   height: window.innerHeight,
-//   physics: {
-//     default: "arcade",
-//     arcade: { debug: false }
-//   },
-//   scene: { preload, create, update },
-//   scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
-// };
-
-// let game = new Phaser.Game(config);
-
-// // ---- Game Objects ----
-// let player, keys;
-// let minimap, miniPlayer;
-
-// let speed = 0;
-// let maxSpeed = 300;
-// let acceleration = 0.05;
-// let turnSpeed = 3;
-
-// let positionHistory = [];
-// let isInvincible = false;
-
-// // ---- Pixel Mask ----
-// let maskCanvas, maskCtx;
-
-
-// // ===================
-// // Preload
-// // ===================
-// function preload() {
-//   // 彩色圖（小地圖）
-//   this.load.image("circleMap", "/image/map/circle_map.png");
-
-//   // 黑白主地圖（可走路＝白）
-//   this.load.image("mask", "/image/地圖＿圓環路口/Circle_map_WB.PNG");
-// }
-
-
-
-// // ===================
-// // Create
-// // ===================
-// function create() {
-//   this.cameras.main.setBackgroundColor("#000000");
-
-//   //----------------------------------
-//   // 1. 載入黑白遮罩：用來顯示＋碰撞
-//   //----------------------------------
-//   const maskImg = this.textures.get("mask").getSourceImage();
-
-//   maskCanvas = document.createElement("canvas");
-//   maskCanvas.width = maskImg.width;   // 8000
-//   maskCanvas.height = maskImg.height; // 8000
-//   maskCtx = maskCanvas.getContext("2d");
-//   maskCtx.drawImage(maskImg, 0, 0);
-
-//   // 🔥 把黑白圖放為主背景
-//   let mainMap = this.add.image(0, 0, "mask")
-//     .setOrigin(0, 0)
-//     .setDepth(-10)
-//     .setScale(0.16); // 8000*0.16 = 1280
-
-
-//   //----------------------------------
-//   // 2. 左上角的小地圖（彩色，固定不動）
-//   //----------------------------------
-//   this.add.image(0, 0, "circleMap")
-//     .setOrigin(0, 0)
-//     .setScale(0.03)    // 小地圖尺寸
-//     .setScrollFactor(0)
-//     .setDepth(1000);
-
-
-//   //----------------------------------
-//   // 3. 世界邊界：8000x8000
-//   //----------------------------------
-//   this.cameras.main.setBounds(0, 0, 8000, 8000);
-//   this.physics.world.setBounds(0, 0, 8000, 8000);
-
-
-//   //----------------------------------
-//   // 4. 玩家初始位置（放在道路附近）
-//   //----------------------------------
-//   player = this.add.rectangle(
-//     4000,
-//     3000,
-//     80,
-//     40,
-//     0x00ff00
-//   );
-//   this.physics.add.existing(player);
-//   player.rotation = Phaser.Math.DegToRad(90);
-
-
-//   //----------------------------------
-//   // 5. 控制鍵
-//   //----------------------------------
-//   keys = this.input.keyboard.addKeys({
-//     left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-//     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-//     up: Phaser.Input.Keyboard.KeyCodes.UP,
-//     down: Phaser.Input.Keyboard.KeyCodes.DOWN
-//   });
-
-
-//   //----------------------------------
-//   // 6. Camera 跟隨玩家
-//   //----------------------------------
-//   this.cameras.main.startFollow(player);
-
-
-//   //----------------------------------
-//   // 7. 小地圖玩家點
-//   //----------------------------------
-//   miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
-// }
-
-
-
-// // ===================
-// // Update Loop
-// // ===================
-// function update() {
-//   // ---- Rotation ----
-//   if (keys.left.isDown) player.rotation -= Phaser.Math.DegToRad(turnSpeed);
-//   if (keys.right.isDown) player.rotation += Phaser.Math.DegToRad(turnSpeed);
-
-//   // ---- Speed ----
-//   let targetSpeed = keys.up.isDown
-//     ? maxSpeed
-//     : keys.down.isDown
-//       ? 0
-//       : speed * 0.95;
-
-//   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
-
-
-//   // ---- Predict Next Position ----
-//   let nextX = player.x + Math.cos(player.rotation) * speed;
-//   let nextY = player.y + Math.sin(player.rotation) * speed;
-
-//   // --- Pixel Collision ---
-//   if (!isRoad(nextX, nextY)) {
-//     hitWallPixel(player);
-//   } else {
-//     player.body.setVelocity(
-//       Math.cos(player.rotation) * speed,
-//       Math.sin(player.rotation) * speed
-//     );
-//   }
-
-//   // Save history
-//   positionHistory.push({
-//     x: player.x,
-//     y: player.y,
-//     rotation: player.rotation
-//   });
-//   if (positionHistory.length > 60) positionHistory.shift();
-
-//   // Minimap update
-//   miniPlayer.x = 100 + (player.x / 8000) * 600 * 0.1;
-//   miniPlayer.y = 100 + (player.y / 8000) * 600 * 0.1;
-// }
-
-
-
-// // ===================
-// // Pixel Mask Collision
-// // ===================
-// function isRoad(x, y) {
-//   if (!maskCtx) return false;
-//   let d = maskCtx.getImageData(x, y, 1, 1).data;
-//   return d[0] > 200 && d[1] > 200 && d[2] > 200; // 白色 = 可走
-// }
-
-
-
-// // ===================
-// // Crash → Backtrack
-// // ===================
-// function hitWallPixel(player) {
-//   if (isInvincible) return;
-
-//   speed = 0;
-//   isInvincible = true;
-
-//   if (positionHistory.length > 10) {
-//     let past = positionHistory[0];
-//     player.x = past.x;
-//     player.y = past.y;
-//     player.rotation = past.rotation;
-//     player.body.reset(past.x, past.y);
-//   }
-
-//   // 閃爍效果
-//   player.scene.tweens.add({
-//     targets: player,
-//     alpha: 0,
-//     duration: 80,
-//     yoyo: true
-//   });
-
-//   player.scene.time.delayedCall(300, () => {
-//     isInvincible = false;
-//   });
-// }
-
-
-
-// // ================================
-// // Level 1 – 圓環 + Pixel-based Collision
-// // ================================
-
-// let config = {
-//   type: Phaser.AUTO,
-//   width: window.innerWidth,
-//   height: window.innerHeight,
-//   physics: {
-//     default: "arcade",
-//     arcade: { debug: false }
-//   },
-//   scene: { preload, create, update },
-//   scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
-// };
-
-// let game = new Phaser.Game(config);
-
-// // ---- Game Objects ----
-// let player, keys;
-// let goalSensor;
-// let minimap, miniPlayer;
-
-// let speed = 0;
-// let maxSpeed = 300;
-// let acceleration = 0.05;
-// let turnSpeed = 3;
-
-// let positionHistory = [];
-// let isInvincible = false;
-
-// // ---- Pixel Mask ----
-// let maskCanvas, maskCtx;
-
-// // ---- Level Data ----
-// const LEVEL = {
-//   ring: { cx: 1250, cy: 1250, outerR: 1000, innerR: 700 },
-
-//   entrance: { x: 1180, y: 400, rotationDeg: 90 },
-
-//   branches: [
-//     {
-//       id: "EAST",
-//       points: [[1800, 1250], [2000, 1250], [2200, 1300]],
-//       candidateExit: true
-//     },
-//     {
-//       id: "WEST",
-//       points: [[700, 1250], [600, 1250], [500, 1250]],
-//       candidateExit: true
-//     },
-//     {
-//       id: "NORTH",
-//       points: [[1250, 400], [1250, 300], [1250, 200]],
-//       candidateExit: true
-//     },
-//     {
-//       id: "SOUTH",
-//       points: [[1250, 1900], [1250, 2000], [1250, 2100]],
-//       candidateExit: true
-//     }
-//   ]
-// };
-
-// let chosenExit = null;
-
-
-// // ===================
-// // Preload
-// // ===================
-// function preload() {
-//   // 小地圖
-//   this.load.image("circleMap", "/image/map/circle_map.png");
-
-//   // 黑白遮罩
-//   this.load.image("mask", "/image/地圖＿圓環路口/Circle_map_WB.PNG");
-// }
-
-
-
-// // ===================
-// // Create
-// // ===================
-// // function create() {
-// //   this.cameras.main.setBackgroundColor("#222222");
-
-// //   // ---- 加載黑白遮罩 ----
-// //   const maskImg = this.textures.get("mask").getSourceImage();
-
-// //   maskCanvas = document.createElement("canvas");
-// //   maskCanvas.width = maskImg.width;
-// //   maskCanvas.height = maskImg.height;
-// //   maskCtx = maskCanvas.getContext("2d");
-// //   maskCtx.drawImage(maskImg, 0, 0);
-
-// //   // ---- 主地圖背景 ----
-// //   let bigMap = this.add.image(0, 0, "circleMap")
-// //     .setOrigin(0, 0)
-// //     .setDepth(-10); // 保證在車子底下
-
-// //   bigMap.setScale(1); // 如果地圖原本是 2500x2500 就用 1
-
-// //   // ---- 小地圖（左上角） ----
-// //   this.add.image(0, 0, "circleMap")
-// //     .setOrigin(0, 0)
-// //     .setScale(0.03)
-// //     .setScrollFactor(0)
-// //     .setDepth(1000);
-
-// //   // ---- 隨機選出口 ----
-// //   chosenExit = pickRandomExit();
-
-// //   // ---- 玩家 ----
-// //   player = this.add.rectangle(
-// //     LEVEL.entrance.x,
-// //     LEVEL.entrance.y,
-// //     80,
-// //     40,
-// //     0x00ff00
-// //   );
-// //   this.physics.add.existing(player);
-// //   player.rotation = Phaser.Math.DegToRad(LEVEL.entrance.rotationDeg);
-
-// //   // ---- 出口 ----
-// //   createGoalSensor(this, chosenExit);
-
-// //   // ---- 碰撞：出口 ----
-// //   this.physics.add.overlap(player, goalSensor, reachExit, null, this);
-
-// //   // ---- Camera ----
-// //   this.cameras.main.startFollow(player);
-// //   this.cameras.main.setBounds(0, 0, 2500, 2500);
-// //   this.physics.world.setBounds(0, 0, 2500, 2500);
-
-// //   // ---- 控制 ----
-// //   keys = this.input.keyboard.addKeys({
-// //     left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-// //     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-// //     up: Phaser.Input.Keyboard.KeyCodes.UP,
-// //     down: Phaser.Input.Keyboard.KeyCodes.DOWN
-// //   });
-
-// //   // ---- 小地圖 ----
-// //   minimap = this.add.graphics().setScrollFactor(0);
-// //   drawMinimap(minimap);
-
-// //   miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
-// // }
-
-
-
-// // function create() {
-// //   this.cameras.main.setBackgroundColor("#222222");
-
-// //   // ---- 加載黑白遮罩 ----
-// //   const maskImg = this.textures.get("mask").getSourceImage();
-// //   maskCanvas = document.createElement("canvas");
-// //   maskCanvas.width = maskImg.width;
-// //   maskCanvas.height = maskImg.height;
-// //   maskCtx = maskCanvas.getContext("2d");
-// //   maskCtx.drawImage(maskImg, 0, 0);
-
-// //   // ---- 主地圖 ----
-// //   let bigMap = this.add.image(0, 0, "circleMap")
-// //     .setOrigin(0, 0)
-// //     .setDepth(-10);
-
-// //   // ---- 世界邊界改成 8000 ----
-// //   this.cameras.main.setBounds(0, 0, 8000, 8000);
-// //   this.physics.world.setBounds(0, 0, 8000, 8000);
-
-// //   // ---- 小地圖（左上角） ----
-// //   this.add.image(0, 0, "circleMap")
-// //     .setOrigin(0, 0)
-// //     .setScale(0.03)     // 建議放大一點（0.03 太小了）
-// //     .setScrollFactor(0)
-// //     .setDepth(1000);
-
-// //   // ---- 隨機出口 ----
-// //   chosenExit = pickRandomExit();
-
-// //   // ---- 玩家在地圖上的真實位置 ----
-// //   player = this.add.rectangle(
-// //     4000,
-// //     3000,
-// //     80,
-// //     40,
-// //     0x00ff00
-// //   );
-// //   this.physics.add.existing(player);
-// //   player.rotation = Phaser.Math.DegToRad(90);
-
-// //   // ---- 出口 ----
-// //   createGoalSensor(this, chosenExit);
-// //   this.physics.add.overlap(player, goalSensor, reachExit, null, this);
-
-// //   // ---- Camera ----
-// //   this.cameras.main.startFollow(player);
-
-// //   // ---- 控制 ----
-// //   keys = this.input.keyboard.addKeys({
-// //     left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-// //     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-// //     up: Phaser.Input.Keyboard.KeyCodes.UP,
-// //     down: Phaser.Input.Keyboard.KeyCodes.DOWN
-// //   });
-
-// //   // ---- Minimap graphics ----
-// //   minimap = this.add.graphics().setScrollFactor(0);
-// //   drawMinimap(minimap);
-// //   miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
-// // }
-
-
-
-// // ===================
-// // Update Loop
-// // ===================
-// function update() {
-//   // ---- Steering ----
-//   if (keys.left.isDown) player.rotation -= Phaser.Math.DegToRad(turnSpeed);
-//   if (keys.right.isDown) player.rotation += Phaser.Math.DegToRad(turnSpeed);
-
-//   // ---- Acceleration ----
-//   let targetSpeed = keys.up.isDown
-//     ? maxSpeed
-//     : keys.down.isDown
-//       ? 0
-//       : speed * 0.95;
-
-//   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
-
-//   // ---- 預測下一步位置 ----
-//   let nextX = player.x + Math.cos(player.rotation) * speed;
-//   let nextY = player.y + Math.sin(player.rotation) * speed;
-
-//   // ---- Pixel-based Collision ----
-//   if (!isRoad(nextX, nextY)) {
-//     hitWallPixel(player);
-//   } else {
-//     player.body.setVelocity(
-//       Math.cos(player.rotation) * speed,
-//       Math.sin(player.rotation) * speed
-//     );
-//   }
-
-//   // ---- Save history for rollback ----
-//   positionHistory.push({
-//     x: player.x,
-//     y: player.y,
-//     rotation: player.rotation
-//   });
-//   if (positionHistory.length > 60) positionHistory.shift();
-
-//   // ---- Minimap update ----
-//   updateMiniPlayer(player.x, player.y);
-// }
-
-
-
-// // ===================
-// // Pixel Mask Collision
-// // ===================
-// function isRoad(x, y) {
-//   if (!maskCtx) return true;
-//   let d = maskCtx.getImageData(x, y, 1, 1).data;
-//   return d[0] > 200 && d[1] > 200 && d[2] > 200;   // 白色 = 可走
-// }
-
-
-
-// // ===================
-// // 撞牆
-// // ===================
-// function hitWallPixel(player) {
-//   if (isInvincible) return;
-
-//   speed = 0;
-//   isInvincible = true;
-
-//   if (positionHistory.length > 5) {
-//     let past = positionHistory[0];
-//     player.x = past.x;
-//     player.y = past.y;
-//     player.rotation = past.rotation;
-//     player.body.reset(past.x, past.y);
-//   }
-
-//   // 閃爍
-//   player.scene.tweens.add({
-//     targets: player,
-//     alpha: 0,
-//     duration: 80,
-//     yoyo: true
-//   });
-
-//   player.scene.time.delayedCall(500, () => {
-//     isInvincible = false;
-//   });
-// }
-
-
-
-// // ===================
-// // 小地圖
-// // ===================
-// function drawMinimap(g) {
-//   const { cx, cy, outerR, innerR } = LEVEL.ring;
-//   const scale = 0.08;
-//   const ox = 100, oy = 100;
-
-//   g.clear();
-//   g.lineStyle(2, 0xffffff);
-//   g.strokeCircle(ox, oy, outerR * scale);
-//   g.strokeCircle(ox, oy, innerR * scale);
-// }
-
-// function updateMiniPlayer(px, py) {
-//   const scale = 0.08;
-//   const ox = 100, oy = 100;
-//   const { cx, cy } = LEVEL.ring;
-
-//   miniPlayer.x = ox + (px - cx) * scale;
-//   miniPlayer.y = oy + (py - cy) * scale;
-// }
-
-
-
-// // ===================
-// // 出口
-// // ===================
-// function pickRandomExit() {
-//   let list = LEVEL.branches.filter(b => b.candidateExit);
-//   return Phaser.Math.RND.pick(list);
-// }
-
-// function createGoalSensor(scene, branch) {
-//   let pts = branch.points;
-//   let last = pts[pts.length - 1];
-
-//   goalSensor = scene.add.rectangle(last[0], last[1], 150, 150, 0x00ffff, 0.2);
-//   scene.physics.add.existing(goalSensor);
-
-//   goalSensor.body.setAllowGravity(false);
-//   goalSensor.body.setImmovable(true);
-// }
-
-
-
-// // ===================
-// // 通關
-// // ===================
-// function reachExit() {
-//   console.log("🎉 通關！出口是：" + chosenExit.id);
-// }
-
-
-
-// // // ================================
-// // // Level 1 – 圓環 + 隨機出口 + 左上角地圖
-// // // ================================
-
-// // // ---- Phaser Config ----
-// // let config = {
-// //   type: Phaser.AUTO,
-// //   width: window.innerWidth,
-// //   height: window.innerHeight,
-// //   physics: {
-// //     default: "arcade",
-// //     arcade: { debug: false }
-// //   },
-// //   scene: { preload, create, update },
-// //   scale: {
-// //     mode: Phaser.Scale.RESIZE,
-// //     autoCenter: Phaser.Scale.CENTER_BOTH
-// //   }
-// // };
-
-// // let game = new Phaser.Game(config);
-
-// // // ---- Game Objects ----
-// // let player;
-// // let keys;
-// // let wallsGroup;
-// // let goalSensor;
-// // let minimap;
-// // let miniPlayer;
-// // let speed = 0;
-// // let maxSpeed = 300;
-// // let acceleration = 0.05;
-// // let turnSpeed = 3;
-
-// // let positionHistory = [];
-// // let isColliding = false;
-// // let isInvincible = false;
-
-// // // ---- Level Data (資料驅動) ----
-// // const LEVEL = {
-// //   ring: { cx: 1250, cy: 1250, outerR: 1000, innerR: 700 },
-
-// //   entrance: {
-// //     x: 1180, y: 400, rotationDeg: 90
-// //   },
-
-// //   branches: [
-// //     {
-// //       id: "EAST",
-// //       points: [
-// //         [1800, 1250],
-// //         [2000, 1250],
-// //         [2200, 1300]
-// //       ],
-// //       candidateExit: true
-// //     },
-// //     {
-// //       id: "WEST",
-// //       points: [
-// //         [700, 1250],
-// //         [600, 1250],
-// //         [500, 1250]
-// //       ],
-// //       candidateExit: true
-// //     },
-// //     {
-// //       id: "NORTH",
-// //       points: [
-// //         [1250, 400],
-// //         [1250, 300],
-// //         [1250, 200]
-// //       ],
-// //       candidateExit: true
-// //     },
-// //     {
-// //       id: "SOUTH",
-// //       points: [
-// //         [1250, 1900],
-// //         [1250, 2000],
-// //         [1250, 2100]
-// //       ],
-// //       candidateExit: true
-// //     }
-// //   ]
-// // };
-
-// // let chosenExit = null;
-// // let circleMapSprite; 
-
-
-// // // ===================
-// // // Preload
-// // // ===================
-// // function preload() {
-// //   this.load.image("circleMap", "/image/map/circle_map.png");
-// // }
-
-
-
-// // // ===================
-// // // Create
-// // // ===================
-// // function create() {
-// //   this.cameras.main.setBackgroundColor("#222222");
-
-// //   // ✅ 左上角顯示縮小版地圖
-// //   circleMapSprite = this.add.image(0, 0, "circleMap")
-// //     .setOrigin(0, 0)
-// //     .setScale(0.03)
-// //     .setScrollFactor(0);  // 固定在左上角，不跟鏡頭動
-
-// // // ✅ 確認渲染排序：把它放在最上層 HUD
-// //   circleMapSprite.setDepth(1000);
-
-// //   // ✅ 決定本局出口
-// //   chosenExit = pickRandomExit();
-
-// //   // ✅ 建立圓環牆壁
-// //   wallsGroup = this.physics.add.staticGroup();
-// //   createRingWalls(this);
-
-// //   // ✅ 建立分支牆（每一條 polyline）
-// //   LEVEL.branches.forEach(branch => {
-// //     createBranchWalls(this, branch);
-// //   });
-
-// //   // ✅ 建立出口感應器（只有一個）
-// //   createGoalSensor(this, chosenExit);
-
-// //   // ✅ 玩家
-// //   player = this.add.rectangle(
-// //     LEVEL.entrance.x,
-// //     LEVEL.entrance.y,
-// //     80, 40,
-// //     0x00ff00
-// //   );
-// //   this.physics.add.existing(player);
-// //   player.rotation = Phaser.Math.DegToRad(LEVEL.entrance.rotationDeg);
-
-// //   // ✅ 碰撞：牆壁
-// //   this.physics.add.collider(player, wallsGroup, hitWall, null, this);
-
-// //   // ✅ 碰撞：出口
-// //   this.physics.add.overlap(player, goalSensor, reachExit, null, this);
-
-// //   // ✅ Camera
-// //   this.cameras.main.startFollow(player);
-// //   this.cameras.main.setBounds(0, 0, 2500, 2500);
-// //   this.physics.world.setBounds(0, 0, 2500, 2500);
-
-// //   // ✅ 控制鍵
-// //   keys = this.input.keyboard.addKeys({
-// //     left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-// //     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-// //     up: Phaser.Input.Keyboard.KeyCodes.UP,
-// //     down: Phaser.Input.Keyboard.KeyCodes.DOWN
-// //   });
-
-// //   // ✅ 小地圖
-// //   minimap = this.add.graphics().setScrollFactor(0);
-// //   drawMinimap(minimap);
-
-// //   miniPlayer = this.add.circle(100, 100, 5, 0x00ff00).setScrollFactor(0);
-// // }
-
-
-
-// // // ===================
-// // // Update
-// // // ===================
-// // function update() {
-// //   // ---- 方向 ----
-// //   if (keys.left.isDown) player.rotation -= Phaser.Math.DegToRad(turnSpeed);
-// //   if (keys.right.isDown) player.rotation += Phaser.Math.DegToRad(turnSpeed);
-
-// //   // ---- 加速 ----
-// //   let targetSpeed = keys.up.isDown
-// //     ? maxSpeed
-// //     : keys.down.isDown
-// //       ? 0
-// //       : speed * 0.95;
-
-// //   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
-
-// //   // ---- 移動 ----
-// //   player.body.setVelocity(
-// //     Math.cos(player.rotation) * speed,
-// //     Math.sin(player.rotation) * speed
-// //   );
-
-// //   // ---- 記錄位置（倒退用） ----
-// //   positionHistory.push({
-// //     x: player.x, y: player.y, rotation: player.rotation
-// //   });
-// //   if (positionHistory.length > 60) positionHistory.shift();
-
-// //   // ---- 撞牆後恢復 ----
-// //   let touching = player.body.touching.none === false || player.body.blocked.none === false;
-// //   if (!touching) isColliding = false;
-
-// //   // ---- 更新小地圖玩家點 ----
-// //   updateMiniPlayer(player.x, player.y);
-// // }
-
-
-
-// // // ===================
-// // // 小地圖邏輯
-// // // ===================
-// // function drawMinimap(g) {
-// //   const { cx, cy, outerR, innerR } = LEVEL.ring;
-
-// //   const scale = 0.08;
-// //   const ox = 100, oy = 100;
-
-// //   g.clear();
-// //   g.lineStyle(2, 0xffffff);
-// //   g.strokeCircle(ox, oy, outerR * scale);
-// //   g.strokeCircle(ox, oy, innerR * scale);
-// // }
-
-// // function updateMiniPlayer(px, py) {
-// //   const scale = 0.08;
-// //   const ox = 100, oy = 100;
-// //   const { cx, cy } = LEVEL.ring;
-
-// //   miniPlayer.x = ox + (px - cx) * scale;
-// //   miniPlayer.y = oy + (py - cy) * scale;
-// // }
-
-
-
-// // // ===================
-// // // 建立圓環牆
-// // // ===================
-// // function createRingWalls(scene) {
-// //   const { cx, cy, outerR, innerR } = LEVEL.ring;
-
-// //   for (let angle = 0; angle < 360; angle += 3) {
-// //     let rad = Phaser.Math.DegToRad(angle);
-
-// //     let ox = cx + Math.cos(rad) * outerR;
-// //     let oy = cy + Math.sin(rad) * outerR;
-
-// //     let ix = cx + Math.cos(rad) * innerR;
-// //     let iy = cy + Math.sin(rad) * innerR;
-
-// //     let w1 = scene.add.rectangle(ox, oy, 40, 40, 0x888888);
-// //     let w2 = scene.add.rectangle(ix, iy, 40, 40, 0x888888);
-// //     wallsGroup.add(w1);
-// //     wallsGroup.add(w2);
-// //   }
-// // }
-
-
-
-// // // ===================
-// // // 建立分支牆（沿 polyline 擺小方塊）
-// // // ===================
-// // function createBranchWalls(scene, branch) {
-// //   const pts = branch.points;
-
-// //   for (let i = 0; i < pts.length - 1; i++) {
-// //     let [x1, y1] = pts[i];
-// //     let [x2, y2] = pts[i + 1];
-
-// //     let steps = 20;
-// //     for (let t = 0; t <= 1; t += 1 / steps) {
-// //       let x = Phaser.Math.Linear(x1, x2, t);
-// //       let y = Phaser.Math.Linear(y1, y2, t);
-
-// //       let w = scene.add.rectangle(x, y, 35, 35, 0x666666);
-// //       wallsGroup.add(w);
-// //     }
-// //   }
-// // }
-
-
-
-// // // ===================
-// // // 抽選唯一出口
-// // // ===================
-// // function pickRandomExit() {
-// //   let candidates = LEVEL.branches.filter(b => b.candidateExit);
-// //   let pick = Phaser.Math.RND.pick(candidates);
-// //   return pick;
-// // }
-
-
-
-// // // ===================
-// // // 出口感應器（Goal）
-// // // ===================
-// // function createGoalSensor(scene, branch) {
-// //   let pts = branch.points;
-// //   let last = pts[pts.length - 1];
-
-// //   goalSensor = scene.add.rectangle(
-// //     last[0], last[1], 150, 150, 0x00ffff, 0.2
-// //   );
-// //   scene.physics.add.existing(goalSensor);
-// //   goalSensor.body.setAllowGravity(false);
-// //   goalSensor.body.setImmovable(true);
-// //   goalSensor.body.setSize(150, 150);
-// // }
-
-
-
-// // // ===================
-// // // 過關邏輯
-// // // ===================
-// // function reachExit() {
-// //   console.log("🎉 通關！出口是：" + chosenExit.id);
-// // }
-
-
-
-// // // ===================
-// // // 撞牆邏輯
-// // // ===================
-// // function hitWall(player, wall) {
-// //   if (isInvincible) return;
-
-// //   isColliding = true;
-// //   speed = 0;
-// //   isInvincible = true;
-
-// //   // 往回退
-// //   let past = positionHistory[0];
-// //   player.x = past.x;
-// //   player.y = past.y;
-// //   player.rotation = past.rotation;
-// //   player.body.reset(past.x, past.y);
-
-// //   // 閃爍效果
-// //   player.scene.tweens.add({
-// //     targets: player,
-// //     alpha: 0,
-// //     duration: 100,
-// //     yoyo: true
-// //   });
-
-// //   // 無敵恢復
-// //   player.scene.time.delayedCall(500, () => {
-// //     isInvincible = false;
-// //   });
-// // }
+// ======================================================
+// 斜紅燈牆，多小矩形拼接（矩形隱形）
+// ======================================================
+function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000, greenTime = 3000) {
+  const scene = this;
+  const dx = (x2 - x1) / segments;
+  const dy = (y2 - y1) / segments;
+
+  let rects = [], colliders = [];
+  let obj = { rects: [], hud: null, lineGraphics: null, state: 'red', colliders: [] };
+
+  // ----------------------------------------------------
+  // 紅線（純視覺）
+  // ----------------------------------------------------
+  let lineGraphics = scene.add.graphics();
+  lineGraphics.lineStyle(4, 0xff0000);
+  lineGraphics.beginPath();
+  lineGraphics.moveTo(x1, y1);
+  lineGraphics.lineTo(x2, y2);
+  lineGraphics.strokePath();
+  obj.lineGraphics = lineGraphics;
+
+  for (let i = 0; i <= segments; i++) {
+    const segX = x1 + dx * i;
+    const segY = y1 + dy * i;
+    let rect = scene.add.rectangle(segX, segY, 20, 20, 0xff0000, 0); // 隱形矩形
+    scene.physics.add.existing(rect, true);
+    rects.push(rect);
+
+    let col = scene.physics.add.collider(player, rect, () => {
+      if (obj.state === 'red') hitWallPixel(player);
+    });
+    colliders.push(col);
+  }
+
+  obj.rects = rects;
+  obj.colliders = colliders;
+
+  // ----------------------------------------------------
+  // HUD
+  // ----------------------------------------------------
+  let midX = x1 + dx * Math.floor(segments / 2);
+  let midY = y1 + dy * Math.floor(segments / 2);
+  obj.hud = scene.add.circle(midX + 30, midY - 30, 15, 0xff0000).setDepth(999);
+
+  function setState(state) {
+    obj.state = state;
+    obj.colliders.forEach(c => c.active = (state === 'red'));
+  }
+
+  setState('red');
+  scene.time.addEvent({ delay: redTime, loop: true, callback: () => setState('green') });
+  scene.time.addEvent({ delay: redTime + greenTime, loop: true, callback: () => setState('red') });
+
+  trafficLights.push(obj);
+}
+
+// ======================================================
+// 更新紅燈牆 HUD
+// ======================================================
+function updateTrafficHUD() {
+  trafficLights.forEach(obj => {
+    let midRect = obj.rects[Math.floor(obj.rects.length / 2)];
+    obj.hud.x = midRect.x + 30;
+    obj.hud.y = midRect.y - 30;
+    obj.hud.fillColor = obj.state === 'red' ? 0xff0000 : 0x00ff00;
+  });
+}
+
+// ======================================================
+// 座標轉換
+// ======================================================
+
+function makeWaypointList(list) {
+    return list.map(p => mapToWorld(p.x, p.y));
+}
+
+function mapToWorld(px, py) {
+    return {
+        x: px * MAP_SCALE,
+        y: py * MAP_SCALE
+    };
+}
+
+function onPlayerHitNPC(player, npc) {
+    const scene = player.scene;
+
+    if (isInvincible) return;
+
+    // 扣血
+    scene.hp--;
+    scene.updateHeart();
+
+    // 撞 NPC 跟撞牆一樣：給無敵時間
+    isInvincible = true;
+
+    // 撞到時閃爍
+    scene.tweens.add({
+        targets: player,
+        alpha: 0,
+        duration: 80,
+        yoyo: true,
+        repeat: 3
+    });
+
+    // 無敵1秒
+    scene.time.delayedCall(1000, () => {
+        isInvincible = false;
+    });
+
+    // 如果血歸0 → 回出生點
+    if (scene.hp <= 0) {
+        player.x = START_X * MAP_SCALE;
+        player.y = START_Y * MAP_SCALE;
+        player.rotation = Phaser.Math.DegToRad(90);
+        player.body.reset(player.x, player.y);
+
+        scene.hp = 3;
+        scene.updateHeart();
+    }
+  }
+
+  let npcs = [];
+  function spawnNPC(scene, mapX, mapY, texture, speed, waypointList) {
+    let pos = mapToWorld(mapX, mapY);
+    let worldWaypoints = makeWaypointList(waypointList);
+
+    let npc = new NPC(
+        scene,
+        pos.x,
+        pos.y,
+        texture,
+        speed,
+        makeWaypointList(waypointList)
+    );
+
+    for (let other of npcs) {
+    scene.physics.add.collider(npc.sprite, other.sprite);
+  }
+
+    npcs.push(npc);
+    return npc;
+  }
