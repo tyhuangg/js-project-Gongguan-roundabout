@@ -1,7 +1,7 @@
 // ======================================================
 // Level 1 - Pixel Collision + 彩色主地圖 + 彩色小地圖
 // ======================================================
-
+// import { select } from "./select.js";
 let config = {
   type: Phaser.AUTO,
   width: window.innerWidth,
@@ -42,8 +42,9 @@ const CAR_ANGLE_OFFSET = Phaser.Math.DegToRad(90);
 // Preload
 // ======================================================
 function preload() {
-  this.load.image("colorMap", "/image/map/circle_map.png");    
-  this.load.image("mask", "/image/map/Circle_map_WB.PNG");    
+  this.load.image("smallMap", "/image/map/circle_small_map.png");
+  this.load.image("colorMap", "/image/map/circle_map.png");
+  this.load.image("mask", "/image/map/Circle_map_WB.PNG");
   this.load.image("heart3", "/image/ui/Heart/3heart.png");
   this.load.image("heart2", "/image/ui/Heart/2heart.png");
   this.load.image("heart1", "/image/ui/Heart/1heart.png");
@@ -52,6 +53,9 @@ function preload() {
   this.load.image("npcBus", "/image/npc_car_top/npc_bus_top.png");
   this.load.image("npcCar", "/image/npc_car_top/npc_car_top.png");
   this.load.image("npcScooter", "/image/npc_car_top/npc_scooter_top.png");
+  this.load.image("Bus", "/image/car_top/bus_top.png");
+  this.load.image("Car", "/image/car_top/car_top.png");
+  this.load.image("Scooter", "/image/car_top/scooter_top.png");
 }
 
 
@@ -88,9 +92,9 @@ function create() {
   // ----------------------------------------------------
   // 3. 左上角小地圖
   // ----------------------------------------------------
-  this.add.image(0, 0, "colorMap")
+  this.add.image(0, 0, "smallMap")
     .setOrigin(0, 0)
-    .setScale(0.04)
+    .setScale(0.5)
     .setScrollFactor(0)
     .setDepth(999);
 
@@ -174,17 +178,36 @@ function create() {
   // ----------------------------------------------------
   // 6. 玩家出生位置
   // ----------------------------------------------------
-  START_X = MAP_SIZE - 2000;
+  START_X = MAP_SIZE - 2200;
   START_Y = MAP_SIZE - 200;
-  player = this.add.rectangle(
-    START_X * MAP_SCALE,
-    START_Y * MAP_SCALE,
-    80,
-    40,
-    0x00ff00
-  );
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('selectedIndex') == 0) {
+    player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Bus").setOrigin(0.5, 0.5).setScale(0.22);
+
+  } else if (params.get('selectedIndex') == 1) {
+    player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Car").setOrigin(0.5, 0.5).setScale(0.05);
+
+  } else if (params.get('selectedIndex') == 2) {
+    player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Scooter").setOrigin(0.5, 0.5).setScale(0.05);
+
+  }
+
+  //原綠色player
+  //  player = this.add.rectangle(
+  //   START_X * MAP_SCALE,
+  //   START_Y * MAP_SCALE,
+  //   80,
+  //   40,
+  //   0x00ff00
+  // );
+  //單圖片player(Debug)
+  // player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Bus").setOrigin(0.5, 0.5).setScale(0.22);
+
+
   this.physics.add.existing(player);
-  player.rotation = Phaser.Math.DegToRad(90);
+  // player.rotation = Phaser.Math.DegToRad(90);
+
 
   for (let npc of npcs) {
     this.physics.add.collider(player, npc.sprite, onPlayerHitNPC, null, this);
@@ -194,10 +217,15 @@ function create() {
   // 7. 控制鍵
   // ----------------------------------------------------
   keys = this.input.keyboard.addKeys({
-    left:  Phaser.Input.Keyboard.KeyCodes.LEFT,
+    left: Phaser.Input.Keyboard.KeyCodes.LEFT,
     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-    up:    Phaser.Input.Keyboard.KeyCodes.UP,
-    down:  Phaser.Input.Keyboard.KeyCodes.DOWN,
+    up: Phaser.Input.Keyboard.KeyCodes.UP,
+    down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+    //WASD
+    left: Phaser.Input.Keyboard.KeyCodes.A,
+    right: Phaser.Input.Keyboard.KeyCodes.D,
+    up: Phaser.Input.Keyboard.KeyCodes.W,
+    down: Phaser.Input.Keyboard.KeyCodes.S,
   });
 
   // ----------------------------------------------------
@@ -221,13 +249,13 @@ function create() {
   // ----------------------------------------------------
   this.hp = 3;
   this.hpIcon = this.add.image(window.innerWidth - 50, 20, "heart3")
-  .setOrigin(1, 0)
-  .setScrollFactor(0)
-  .setDepth(9999)
-  .setScale(0.5);
+    .setOrigin(1, 0)
+    .setScrollFactor(0)
+    .setDepth(9999)
+    .setScale(0.5);
 
   // 監聽視窗縮放
-  this.scale.on('resize', (gameSize)=>{
+  this.scale.on('resize', (gameSize) => {
     this.hpIcon.setPosition(gameSize.width - 20, 20);
   });
 
@@ -255,20 +283,20 @@ function update() {
   const scene = player.scene;
 
   // 方向
-  if (keys.left.isDown)  player.rotation -= Phaser.Math.DegToRad(turnSpeed);
+  if (keys.left.isDown) player.rotation -= Phaser.Math.DegToRad(turnSpeed);
   if (keys.right.isDown) player.rotation += Phaser.Math.DegToRad(turnSpeed);
 
   // 加速 / 慣性
   let targetSpeed =
     keys.up.isDown ? maxSpeed :
-    keys.down.isDown ? 0 :
-    speed * 0.95;
+      keys.down.isDown ? 0 :
+        speed * 0.95;
 
   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
 
   // 預測下一個位置（縮放後座標）
-  let nextX = player.x + Math.cos(player.rotation) * speed;
-  let nextY = player.y + Math.sin(player.rotation) * speed;
+  let nextX = player.x + Math.cos(player.rotation-CAR_ANGLE_OFFSET) * speed;
+  let nextY = player.y + Math.sin(player.rotation-CAR_ANGLE_OFFSET) * speed;
 
   // Pixel collision（轉回原圖座標）
   let maskX = nextX / MAP_SCALE;
@@ -278,8 +306,8 @@ function update() {
     hitWallPixel(player);
   } else {
     player.body.setVelocity(
-      Math.cos(player.rotation) * speed,
-      Math.sin(player.rotation) * speed
+      Math.cos(player.rotation-CAR_ANGLE_OFFSET) * speed,
+      Math.sin(player.rotation-CAR_ANGLE_OFFSET) * speed
     );
   }
 
@@ -294,114 +322,118 @@ function update() {
   // 小地圖更新
   miniPlayer.x = 100 + (player.x / WORLD_SIZE) * 100;
   miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
-  //// miniPlayer.rotation = player.rotation;
-  miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
+   miniPlayer.rotation = player.rotation;
+  // miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
 
   // 紅燈牆 HUD 更新
   updateTrafficHUD();
 
   // NPC 更新
   for (let npc of npcs) {
-      npc.update();
+    npc.update();
   }
 }
+// ======================================================
+// Player
+// ======================================================
+
 
 // ======================================================
 // NPC產生器
 // ======================================================
 class NPC {
-    constructor(scene, worldX, worldY, texture, speed, waypoints) {
-        this.scene = scene;
-        this.startX = worldX;
-        this.startY = worldY;
+  constructor(scene, worldX, worldY, texture, speed, waypoints) {
+    this.scene = scene;
+    this.startX = worldX;
+    this.startY = worldY;
 
-        this.sprite = scene.add.image(worldX, worldY, texture)
-            .setOrigin(0.5, 0.5)
-            .setScale(0.05);
+    this.sprite = scene.add.image(worldX, worldY, texture)
+      .setOrigin(0.5, 0.5)
+      .setScale(0.05);
 
-        scene.physics.add.existing(this.sprite);
-        this.sprite.body.setCircle(10);       // ← 用圓形碰撞更適合車類
-        this.sprite.body.setOffset(
-            this.sprite.width/2 - 10,
-            this.sprite.height/2 - 10
-        );
+    scene.physics.add.existing(this.sprite);
+    this.sprite.body.setCircle(10);       // ← 用圓形碰撞更適合車類
+    this.sprite.body.setOffset(
+      this.sprite.width / 2 - 10,
+      this.sprite.height / 2 - 10
+    );
 
-        this.speed = speed;
-        this.waypoints = waypoints;
-        this.currentPoint = 0;
+    this.speed = speed;
+    this.waypoints = waypoints;
+    this.currentPoint = 0;
 
-        // 初始朝向
-        let target = this.waypoints[0];
-        let targetAngle = Phaser.Math.Angle.Between(worldX, worldY, target.x, target.y);
-        this.sprite.rotation = targetAngle + CAR_ANGLE_OFFSET;
+    // 初始朝向
+    let target = this.waypoints[0];
+    let targetAngle = Phaser.Math.Angle.Between(worldX, worldY, target.x, target.y);
+    this.sprite.rotation = targetAngle + CAR_ANGLE_OFFSET;
 
-        this.stopForRedLight = false;
-    }
+    this.stopForRedLight = false;
+  }
 
-    update() {
-        if (!this.sprite.body) return;
+  update() {
+    if (!this.sprite.body) return;
 
-        // 紅燈檢查
-        let npcNearRed = false;
-        trafficLights.forEach(light => {
-            if (light.state === 'red') {
-                light.rects.forEach(rect => {
-                    let dx = rect.x - this.sprite.x;
-                    let dy = rect.y - this.sprite.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
+    // 紅燈檢查
+    let npcNearRed = false;
+    trafficLights.forEach(light => {
+      if (light.state === 'red') {
+        light.rects.forEach(rect => {
+          let dx = rect.x - this.sprite.x;
+          let dy = rect.y - this.sprite.y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
 
-                    if (dist < 60) npcNearRed = true;
-                });
-            }
+          if (dist < 60) npcNearRed = true;
         });
+      }
+    });
 
-        if (npcNearRed) {
-            this.stopForRedLight = true;
-            this.sprite.body.setVelocity(0, 0);
-        } 
-        else {
-          this.stopForRedLight = false;
-
-          let target = this.waypoints[this.currentPoint];
-          let dx = target.x - this.sprite.x;
-          let dy = target.y - this.sprite.y;
-          let dist = Math.sqrt(dx*dx + dy*dy);
-
-          let baseAngle = Phaser.Math.Angle.Between(this.sprite.x, this.sprite.y, target.x, target.y);
-          this.sprite.rotation = Phaser.Math.Angle.RotateTo(
-              this.sprite.rotation,
-              baseAngle + CAR_ANGLE_OFFSET,
-              0.02
-          );
-
-          this.sprite.body.setVelocity(
-              Math.cos(baseAngle) * this.speed,
-              Math.sin(baseAngle) * this.speed
-          )
-          // 抵達下一個點
-          if (dist < 10) {
-              this.sprite.body.setVelocity(0, 0);
-              this.sprite.body.reset(target.x, target.y);
-              this.currentPoint++;
-
-              if (this.currentPoint >= this.waypoints.length) {
-                  // 瞬間跳回起始位置
-                  this.sprite.body.setVelocity(0, 0);
-                  this.sprite.body.reset(this.startX, this.startY);
-
-                  // 重跑路線
-                  this.currentPoint = 0;
-
-                  // 重新朝向第一個目標
-                  let first = this.waypoints[0];
-                  let angle = Phaser.Math.Angle.Between(this.startX, this.startY, first.x, first.y);
-                  this.sprite.rotation = angle + CAR_ANGLE_OFFSET;
-
-                  return; // 這幀結束
-              }
-          }
-        }
+    if (npcNearRed) {
+      this.stopForRedLight = true;
+      this.sprite.body.setVelocity(0, 0);
     }
+    else {
+      this.stopForRedLight = false;
+
+      let target = this.waypoints[this.currentPoint];
+      let dx = target.x - this.sprite.x;
+      let dy = target.y - this.sprite.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      let baseAngle = Phaser.Math.Angle.Between(this.sprite.x, this.sprite.y, target.x, target.y);
+      this.sprite.rotation = Phaser.Math.Angle.RotateTo(
+        this.sprite.rotation,
+        baseAngle + CAR_ANGLE_OFFSET,
+        0.02
+      );
+
+      this.sprite.body.setVelocity(
+        Math.cos(baseAngle) * this.speed,
+        Math.sin(baseAngle) * this.speed
+      )
+      // 抵達下一個點
+      if (dist < 10) {
+        this.sprite.body.setVelocity(0, 0);
+        this.sprite.body.reset(target.x, target.y);
+        this.currentPoint++;
+
+        if (this.currentPoint >= this.waypoints.length) {
+          // 瞬間跳回起始位置
+          this.sprite.body.setVelocity(0, 0);
+          this.sprite.body.reset(this.startX, this.startY);
+
+          // 重跑路線
+          this.currentPoint = 0;
+
+          // 重新朝向第一個目標
+          let first = this.waypoints[0];
+          let angle = Phaser.Math.Angle.Between(this.startX, this.startY, first.x, first.y);
+          this.sprite.rotation = angle + CAR_ANGLE_OFFSET;
+
+          return; // 這幀結束
+        }
+      }
+    }
+  }
 }
 
 // ======================================================
@@ -436,7 +468,7 @@ function hitWallPixel(player) {
     // 回到初始位置
     player.x = START_X * MAP_SCALE;
     player.y = START_Y * MAP_SCALE;
-    player.rotation = Phaser.Math.DegToRad(90);
+    // player.rotation = Phaser.Math.DegToRad(90);
     player.body.reset(player.x, player.y);
 
     // 重置 HP
@@ -543,72 +575,72 @@ function updateTrafficHUD() {
 // ======================================================
 
 function makeWaypointList(list) {
-    return list.map(p => mapToWorld(p.x, p.y));
+  return list.map(p => mapToWorld(p.x, p.y));
 }
 
 function mapToWorld(px, py) {
-    return {
-        x: px * MAP_SCALE,
-        y: py * MAP_SCALE
-    };
+  return {
+    x: px * MAP_SCALE,
+    y: py * MAP_SCALE
+  };
 }
 
 function onPlayerHitNPC(player, npc) {
-    const scene = player.scene;
+  const scene = player.scene;
 
-    if (isInvincible) return;
+  if (isInvincible) return;
 
-    // 扣血
-    scene.hp--;
+  // 扣血
+  scene.hp--;
+  scene.updateHeart();
+
+  // 撞 NPC 跟撞牆一樣：給無敵時間
+  isInvincible = true;
+
+  // 撞到時閃爍
+  scene.tweens.add({
+    targets: player,
+    alpha: 0,
+    duration: 80,
+    yoyo: true,
+    repeat: 3
+  });
+
+  // 無敵1秒
+  scene.time.delayedCall(1000, () => {
+    isInvincible = false;
+  });
+
+  // 如果血歸0 → 回出生點
+  if (scene.hp <= 0) {
+    player.x = START_X * MAP_SCALE;
+    player.y = START_Y * MAP_SCALE;
+    player.rotation = Phaser.Math.DegToRad(90);
+    player.body.reset(player.x, player.y);
+
+    scene.hp = 3;
     scene.updateHeart();
-
-    // 撞 NPC 跟撞牆一樣：給無敵時間
-    isInvincible = true;
-
-    // 撞到時閃爍
-    scene.tweens.add({
-        targets: player,
-        alpha: 0,
-        duration: 80,
-        yoyo: true,
-        repeat: 3
-    });
-
-    // 無敵1秒
-    scene.time.delayedCall(1000, () => {
-        isInvincible = false;
-    });
-
-    // 如果血歸0 → 回出生點
-    if (scene.hp <= 0) {
-        player.x = START_X * MAP_SCALE;
-        player.y = START_Y * MAP_SCALE;
-        player.rotation = Phaser.Math.DegToRad(90);
-        player.body.reset(player.x, player.y);
-
-        scene.hp = 3;
-        scene.updateHeart();
-    }
   }
+}
 
-  let npcs = [];
-  function spawnNPC(scene, mapX, mapY, texture, speed, waypointList) {
-    let pos = mapToWorld(mapX, mapY);
-    let worldWaypoints = makeWaypointList(waypointList);
+let npcs = [];
+function spawnNPC(scene, mapX, mapY, texture, speed, waypointList) {
+  let pos = mapToWorld(mapX, mapY);
+  let worldWaypoints = makeWaypointList(waypointList);
 
-    let npc = new NPC(
-        scene,
-        pos.x,
-        pos.y,
-        texture,
-        speed,
-        makeWaypointList(waypointList)
-    );
+  let npc = new NPC(
+    scene,
+    pos.x,
+    pos.y,
+    texture,
+    speed,
+    makeWaypointList(waypointList)
+  );
 
-    for (let other of npcs) {
+  for (let other of npcs) {
     scene.physics.add.collider(npc.sprite, other.sprite);
   }
 
-    npcs.push(npc);
-    return npc;
-  }
+  npcs.push(npc);
+  return npc;
+}

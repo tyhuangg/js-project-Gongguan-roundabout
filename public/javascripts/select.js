@@ -6,6 +6,7 @@ let carButtons = [];
 let confirmationImgs;
 let selectedIndex = -1;
 let selectcar;
+let selectbtnW, selectbtnH;
 
 let scaleFactor = 1;
 
@@ -35,6 +36,10 @@ function setup() {
   const startX = (width - totalWidth) / 2;
   const y = height / 2 - btnH / 2;
 
+  // 按鈕大小
+  selectbtnW = 220;
+  selectbtnH = (confirmationImgs.height / confirmationImgs.width) * selectbtnW;
+
   for (let i = 0; i < 3; i++) {
     const x = startX + i * (btnW + spacing);
     const img = carImgs[i];
@@ -60,14 +65,16 @@ function setup() {
       }
     );
     let btn2 = new ImageButton(
-      windowWidth / 2 - 100,
+      windowWidth / 2 - selectbtnW/2,
       windowHeight - 100,
-      200,
-      50,
+      selectbtnW,
+      selectbtnH,
       confirmationImgs,
       null,
       () => {
-        alert(`"選擇車子：${selectcar}`);
+        // alert(`"選擇車子：${selectcar}`);
+        
+        window.location.href = "/level1?selectedIndex="+selectedIndex;
       }
     )
     btn2.visible = false;  // 隱藏
@@ -79,6 +86,7 @@ function setup() {
 
   textAlign(CENTER, CENTER);
 }
+// export const value = selectcar;
 
 
 function draw() {

@@ -20,7 +20,7 @@ class ImageButton {
     // 先畫「背景框」，避免沒圖時完全沒東西
     noStroke();
     fill(this.bgColor);
-    rect(this.x, this.y, this.w, this.h, 10);
+  //   rect(this.x, this.y, this.w, this.h, 10);
 
     // 有圖片就畫圖片（覆蓋在上面）
     if (this.img) {
@@ -35,7 +35,7 @@ class ImageButton {
     // hover 狀態：蓋一層淡淡白色
     if (isHover) {
       fill(255, this.hoverOverlay);
-      rect(this.x, this.y, this.w, this.h, 10);
+      // rect(this.x, this.y, this.w, this.h, 10);
     }
   }
 
