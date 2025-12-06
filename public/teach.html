@@ -7,38 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
   <script src="/javascripts/teach.js" defer></script>
   <style>
-    body {
-      background: #000;
-      overflow: hidden;
-    }
-    canvas {
-      display: block;
-    }
-    /* 結束體驗按鈕 */
-    #endBtn {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      padding: 10px 15px;
-      font-size: 18px;
-      background-color: red;
-      color: white;
-      border: none;
-      cursor: pointer;
-      display: none; /* 預設隱藏 */
-      z-index: 10;
-    }
   </style>
 </head>
 <body>
-  <button id="endBtn" onclick="window.location.href=''">結束體驗</button>
-
-  <script>
-    // 30 秒後顯示按鈕
-    setTimeout(() => {
-      document.getElementById('endBtn').style.display = 'block';
-    }, 30000);
-    
-  </script>
 </body>
 </html>
