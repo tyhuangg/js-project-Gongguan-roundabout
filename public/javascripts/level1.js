@@ -56,6 +56,8 @@ function preload() {
   this.load.image("Bus", "/image/car_top/bus_top.png");
   this.load.image("Car", "/image/car_top/car_top.png");
   this.load.image("Scooter", "/image/car_top/scooter_top.png");
+  this.load.image("redLightIcon", "/image/ui/redgreenlight/RedGreenLight_3Light_Red.png");
+  this.load.image("greenLightIcon", "/image/ui/redgreenlight/RedGreenLight_3Light_Green.png");
 }
 
 
@@ -504,13 +506,25 @@ function hitWallPixel(player) {
 // ======================================================
 // 斜紅燈牆，多小矩形拼接（矩形隱形）
 // ======================================================
+// ======================================================
+// 斜紅燈牆，多小矩形拼接（矩形隱形）+ 圖片 HUD
+// ======================================================
 function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000, greenTime = 3000) {
   const scene = this;
   const dx = (x2 - x1) / segments;
   const dy = (y2 - y1) / segments;
 
+  // 計算線段角度（A：圖片完全跟線一樣的角度）
+  let angle = Phaser.Math.RadToDeg(Math.atan2(y2 - y1, x2 - x1));
+
   let rects = [], colliders = [];
-  let obj = { rects: [], hud: null, lineGraphics: null, state: 'red', colliders: [] };
+  let obj = {
+    rects: [],
+    hud: null,
+    lineGraphics: null,
+    state: 'red',
+    colliders: []
+  };
 
   // ----------------------------------------------------
   // 紅線（純視覺）
@@ -523,10 +537,14 @@ function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000,
   lineGraphics.strokePath();
   obj.lineGraphics = lineGraphics;
 
+  // ----------------------------------------------------
+  // 建立撞擊小矩形
+  // ----------------------------------------------------
   for (let i = 0; i <= segments; i++) {
     const segX = x1 + dx * i;
     const segY = y1 + dy * i;
-    let rect = scene.add.rectangle(segX, segY, 20, 20, 0xff0000, 0); // 隱形矩形
+
+    let rect = scene.add.rectangle(segX, segY, 20, 20, 0xff0000, 0);
     scene.physics.add.existing(rect, true);
     rects.push(rect);
 
@@ -540,23 +558,50 @@ function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000,
   obj.colliders = colliders;
 
   // ----------------------------------------------------
-  // HUD
+  // HUD：紅綠燈圖片（已加入旋轉角度）
   // ----------------------------------------------------
   let midX = x1 + dx * Math.floor(segments / 2);
   let midY = y1 + dy * Math.floor(segments / 2);
-  obj.hud = scene.add.circle(midX + 30, midY - 30, 15, 0xff0000).setDepth(999);
 
+  obj.hud = scene.add.image(midX + 30, midY - 30, "redLightIcon")
+    .setScale(0.15)
+    .setDepth(9999)
+    .setAngle(angle);  // 🔥 完全跟線同角度（方案 A）
+
+  // ----------------------------------------------------
+  // 切換紅綠燈
+  // ----------------------------------------------------
   function setState(state) {
     obj.state = state;
+
+    obj.hud.setTexture(
+      state === "red" ? "redLightIcon" : "greenLightIcon"
+    );
+
+    obj.hud.setAngle(angle);   // 🔥 切換時保持同角度
+
     obj.colliders.forEach(c => c.active = (state === 'red'));
   }
 
+  // 初始紅燈
   setState('red');
-  scene.time.addEvent({ delay: redTime, loop: true, callback: () => setState('green') });
-  scene.time.addEvent({ delay: redTime + greenTime, loop: true, callback: () => setState('red') });
+
+  // 計時切換
+  scene.time.addEvent({
+    delay: redTime,
+    loop: true,
+    callback: () => setState('green')
+  });
+
+  scene.time.addEvent({
+    delay: redTime + greenTime,
+    loop: true,
+    callback: () => setState('red')
+  });
 
   trafficLights.push(obj);
 }
+
 
 // ======================================================
 // 更新紅燈牆 HUD
@@ -566,9 +611,9 @@ function updateTrafficHUD() {
     let midRect = obj.rects[Math.floor(obj.rects.length / 2)];
     obj.hud.x = midRect.x + 30;
     obj.hud.y = midRect.y - 30;
-    obj.hud.fillColor = obj.state === 'red' ? 0xff0000 : 0x00ff00;
   });
 }
+
 
 // ======================================================
 // 座標轉換
