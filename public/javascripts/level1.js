@@ -109,7 +109,7 @@ function create() {
   // ----------------------------------------------------
   // 5. NPCs
   // ----------------------------------------------------
-  let bus1 = spawnNPC(
+let bus1 = spawnNPC(
     this,
     4823, 7735,
     "npcBus",
@@ -123,6 +123,33 @@ function create() {
       { x: 4497, y: 2644 },
       { x: 2421, y: 1743 },
       { x: 784, y: 0 }
+    ]
+  );
+  let bus2 = spawnNPC(
+    this,
+    8000, 2568,
+    "npcBus",
+    60,
+    [
+      {x:5298,y:3001}, {x:4493,y:2633}, {x:2861,y:3118}, {x:2503,y:3737}, {x:1127,y:4305}, {x:0,y:4897}
+    ]
+  );
+  let bus3 = spawnNPC(
+    this,
+    0, 6170,
+    "npcBus",
+    60,
+    [
+      {x:2615,y:4837}, {x:3227,y:5297}, {x:3919,y:5373}, {x:4629,y:5150}, {x:5181,y:4739}, {x:5963,y:4405}, {x:8000,y:4024}
+    ]
+  );
+  let bus4 = spawnNPC(
+    this,
+    0, 6605,
+    "npcBus",
+    60,
+    [
+      {x:2078,y:5589}, {x:2802,y:5884}, {x:3359,y:6167}, {x:3725,y:6453}, {x:3860,y:6724}, {x:4193,y:8000}
     ]
   );
 
@@ -139,6 +166,46 @@ function create() {
       { x: 5855, y: 4495 },
       { x: 6320, y: 4324 },
       { x: 8000, y: 4019 },
+    ]
+  );
+  let car2 = spawnNPC(
+    this,
+    4364, 4732,
+    "npcCar",
+    60,
+    [
+      { x: 4748, y: 4286 },
+      { x: 4825, y: 3836 },
+      { x: 4718, y: 3387 },
+      { x: 4270, y: 3060 },
+      { x: 3313, y: 3052 },
+      { x: 2938, y: 3393 },
+      { x: 2719, y: 3840 },
+      { x: 2774, y: 4363 },
+      { x: 3130, y: 4744 },
+      { x: 3774, y: 4944 },
+      { x: 4327, y: 4745 }
+    ]
+  );
+
+    let car3 = spawnNPC(
+    this,
+    3733, 4930,
+    "npcCar",
+    50,
+    [
+      { x: 4071, y: 4892 },
+      { x: 4748, y: 4286 },
+      { x: 4825, y: 3836 },
+      { x: 4718, y: 3387 },
+      { x: 4270, y: 3060 },
+      { x: 3313, y: 3052 },
+      { x: 2938, y: 3393 },
+      { x: 2719, y: 3840 },
+      { x: 2774, y: 4363 },
+      { x: 3130, y: 4744 },
+      { x: 3774, y: 4944 },
+      { x: 3733, y: 4930 }
     ]
   );
 
@@ -223,11 +290,6 @@ function create() {
     right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
     up: Phaser.Input.Keyboard.KeyCodes.UP,
     down: Phaser.Input.Keyboard.KeyCodes.DOWN,
-    //WASD
-    left: Phaser.Input.Keyboard.KeyCodes.A,
-    right: Phaser.Input.Keyboard.KeyCodes.D,
-    up: Phaser.Input.Keyboard.KeyCodes.W,
-    down: Phaser.Input.Keyboard.KeyCodes.S,
   });
 
   // ----------------------------------------------------
@@ -275,6 +337,9 @@ function create() {
   //建立兩道紅燈牆（可分別設定紅綠燈時間）
   createTrafficLightApprox.call(this, 1370, 1559, 1084, 1651, 15, 5000, 3000); // 第一道
   createTrafficLightApprox.call(this, 414, 1318, 488, 1461, 15, 7000, 2000);  // 第二道
+
+  // 目標線
+  createGoalLine.call(this, 1203, 4099, 1455, 4685, 20);
 }
 
 
@@ -324,7 +389,7 @@ function update() {
   // 小地圖更新
   miniPlayer.x = 100 + (player.x / WORLD_SIZE) * 100;
   miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
-   miniPlayer.rotation = player.rotation;
+  miniPlayer.rotation = player.rotation;
   // miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
 
   // 紅燈牆 HUD 更新
@@ -688,4 +753,40 @@ function spawnNPC(scene, mapX, mapY, texture, speed, waypointList) {
 
   npcs.push(npc);
   return npc;
+}
+
+// ======================================================
+// 終點：斜線目標區（玩家通過 → 進下一關）
+// ======================================================
+function createGoalLine(x1, y1, x2, y2, segments = 20) {
+
+  const scene = this;
+
+  const dx = (x2 - x1) / segments;
+  const dy = (y2 - y1) / segments;
+
+  for (let i = 0; i <= segments; i++) {
+
+    // 原圖座標
+    let px = x1 + dx * i;
+    let py = y1 + dy * i;
+
+    // 轉成 world 座標
+    let wx = px * MAP_SCALE;
+    let wy = py * MAP_SCALE;
+
+    // 建立一個透明矩形當作終點碰撞偵測
+    let rect = scene.add.rectangle(wx, wy, 25, 25, 0x00ff00, 0);
+    scene.physics.add.existing(rect, true);
+
+    // 玩家碰到 → 過關
+    scene.physics.add.overlap(player, rect, () => {
+
+      // 停下來
+      player.body.setVelocity(0, 0);
+
+      // 跳下一關
+      window.location.href = "level2.html";
+    });
+  }
 }
