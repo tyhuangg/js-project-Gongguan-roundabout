@@ -19,7 +19,7 @@ const MAP_SCALE = 0.25;
 let WORLD_SIZE = MAP_SIZE * MAP_SCALE;
 
 let player, keys, miniPlayer;
-let speed = 0, maxSpeed = 150, acceleration = 0.05, turnSpeed = 3;
+let speed = 0, maxSpeed = 150, acceleration = 0.05, turnSpeed = 1;
 
 let positionHistory = [];
 let isInvincible = false;
@@ -47,6 +47,8 @@ const CAR_ANGLE_OFFSET = Phaser.Math.DegToRad(90);
 // Preload
 // ======================================================
 function preload() {
+  this.load.image("smallMap2", "/image/map/Orthogonal_small_map.png");
+  this.load.image("MiniMapMask", "/image/map/MiniMapMask.png");
   this.load.image("colorMap2", "/image/map/Orthogonal_map.png");
   this.load.image("mask2", "/image/map/Orthogonal_map_WB.png");
 
@@ -57,6 +59,9 @@ function preload() {
   this.load.image("npcBus", "/image/npc_car_top/npc_bus_top.png");
   this.load.image("npcCar", "/image/npc_car_top/npc_car_top.png");
   this.load.image("npcScooter", "/image/npc_car_top/npc_scooter_top.png");
+  this.load.image("Bus", "/image/car_top/bus_top.png");
+  this.load.image("Car", "/image/car_top/car_top.png");
+  this.load.image("Scooter", "/image/car_top/scooter_top.png");
   this.load.image("arrow", "/image/ui/Arrow.png");
   this.load.image("lightGreen", "/image/ui/redgreenlight/RedGreenLight_3Light_Green.png");
   this.load.image("lightRed", "/image/ui/redgreenlight/RedGreenLight_3Light_Red.png");
@@ -88,11 +93,14 @@ function create() {
     .setDepth(-10);
 
   // 小地圖
-  this.add.image(0, 0, "colorMap2")
+  this.smallMap2img = this.add.image(0, 0, "smallMap2")
     .setOrigin(0, 0)
-    .setScale(0.04)
+    .setScale(0.5)
     .setScrollFactor(0)
     .setDepth(999);
+
+  
+
 
   // 世界邊界
   this.cameras.main.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
@@ -105,7 +113,7 @@ function create() {
     "npcBus",
     20,
     [
-      {x:2232,y:650},{x:2524,y:1256},{x:2899,y:2114},{x:3368,y:3347}, {x:3670,y:4313},{x:3836,y:5517},{x:4115,y:7031},{x:4283,y:7953}
+      { x: 2232, y: 650 }, { x: 2524, y: 1256 }, { x: 2899, y: 2114 }, { x: 3368, y: 3347 }, { x: 3670, y: 4313 }, { x: 3836, y: 5517 }, { x: 4115, y: 7031 }, { x: 4283, y: 7953 }
     ]
   );
 
@@ -115,7 +123,7 @@ function create() {
     "npcBus",
     20,
     [
-      {x:4305,y:6923}, {x:4319,y:5870}, {x:4089,y:5574}, {x:3980,y:5041}, {x:3800,y:4298}, {x:3591,y:3426}, {x:3368,y:2662},{x:3180,y:2085}, {x:2841,y:1343}, {x:2535,y:694},{x:2249,y:45}]
+      { x: 4305, y: 6923 }, { x: 4319, y: 5870 }, { x: 4089, y: 5574 }, { x: 3980, y: 5041 }, { x: 3800, y: 4298 }, { x: 3591, y: 3426 }, { x: 3368, y: 2662 }, { x: 3180, y: 2085 }, { x: 2841, y: 1343 }, { x: 2535, y: 694 }, { x: 2249, y: 45 }]
   );
 
   let bus3 = spawnNPC(
@@ -124,7 +132,7 @@ function create() {
     "npcBus",
     20,
     [
-      {x:4954,y:7261}, {x:4809,y:6468}, {x:4716,y:5812}, {x:4615,y:5171}, {x:4564,y:4688}, {x:4514,y:4140}, {x:4615,y:3837}, {x:4809,y:3527}, {x:5127,y:3260},{x:5797,y:2691}, {x:7059,y:1472}, {x:7946,y:686}]
+      { x: 4954, y: 7261 }, { x: 4809, y: 6468 }, { x: 4716, y: 5812 }, { x: 4615, y: 5171 }, { x: 4564, y: 4688 }, { x: 4514, y: 4140 }, { x: 4615, y: 3837 }, { x: 4809, y: 3527 }, { x: 5127, y: 3260 }, { x: 5797, y: 2691 }, { x: 7059, y: 1472 }, { x: 7946, y: 686 }]
   );
 
   let car1 = spawnNPC(
@@ -132,7 +140,7 @@ function create() {
     4758, 7940,
     "npcCar",
     80,
-    [{x:4625,y:7038}, {x:4454,y:5885}, {x:4262,y:4665}, {x:4114,y:3999}, {x:3826,y:3060}, {x:3582,y:2240}, {x:3309,y:1560}, {x:2991,y:946}, {x:2673,y:310}, {x:2540,y:59},]
+    [{ x: 4625, y: 7038 }, { x: 4454, y: 5885 }, { x: 4262, y: 4665 }, { x: 4114, y: 3999 }, { x: 3826, y: 3060 }, { x: 3582, y: 2240 }, { x: 3309, y: 1560 }, { x: 2991, y: 946 }, { x: 2673, y: 310 }, { x: 2540, y: 59 },]
   );
 
   let car2 = spawnNPC(
@@ -140,7 +148,7 @@ function create() {
     7560, 82,
     "npcCar",
     60,
-    [{x:6613,y:910}, {x:5497,y:1923}, {x:4477,y:2825}, {x:4211,y:3084}, {x:4040,y:3291}, {x:3870,y:3609}, {x:3811,y:3867}, {x:3760,y:4281}, {x:3700,y:4792},{x:3700,y:5169}, {x:3700,y:5494}, {x:3760,y:5849}, {x:3811,y:6130}, {x:3967,y:7009}, {x:4132,y:7910}]
+    [{ x: 6613, y: 910 }, { x: 5497, y: 1923 }, { x: 4477, y: 2825 }, { x: 4211, y: 3084 }, { x: 4040, y: 3291 }, { x: 3870, y: 3609 }, { x: 3811, y: 3867 }, { x: 3760, y: 4281 }, { x: 3700, y: 4792 }, { x: 3700, y: 5169 }, { x: 3700, y: 5494 }, { x: 3760, y: 5849 }, { x: 3811, y: 6130 }, { x: 3967, y: 7009 }, { x: 4132, y: 7910 }]
   );
 
   let car3 = spawnNPC(
@@ -148,7 +156,7 @@ function create() {
     85, 5069,
     "npcCar",
     40,
-    [{x:950,y:4899}, {x:1726,y:4744}, {x:2407,y:4618}, {x:2702,y:4537}, {x:2954,y:4396}, {x:3131,y:4241}, {x:3316,y:3990}, {x:3427,y:3709},{x:3501,y:3391}, {x:3501,y:2947}, {x:3368,y:2104},{x:3005,y:1291}, {x:2747,y:774},{x:2407,y:93}]
+    [{ x: 950, y: 4899 }, { x: 1726, y: 4744 }, { x: 2407, y: 4618 }, { x: 2702, y: 4537 }, { x: 2954, y: 4396 }, { x: 3131, y: 4241 }, { x: 3316, y: 3990 }, { x: 3427, y: 3709 }, { x: 3501, y: 3391 }, { x: 3501, y: 2947 }, { x: 3368, y: 2104 }, { x: 3005, y: 1291 }, { x: 2747, y: 774 }, { x: 2407, y: 93 }]
   );
 
   let car4 = spawnNPC(
@@ -156,7 +164,7 @@ function create() {
     7323, 24,
     "npcCar",
     50,
-    [{x:6347,y:926}, {x:5268,y:1916}, {x:4639,y:2478}, {x:3848,y:3099}, {x:3323,y:3425}, {x:2725,y:3676}, {x:1867,y:3913}, {x:1061,y:4164}, {x:93,y:4489}]
+    [{ x: 6347, y: 926 }, { x: 5268, y: 1916 }, { x: 4639, y: 2478 }, { x: 3848, y: 3099 }, { x: 3323, y: 3425 }, { x: 2725, y: 3676 }, { x: 1867, y: 3913 }, { x: 1061, y: 4164 }, { x: 93, y: 4489 }]
   );
 
   let scooter1 = spawnNPC(
@@ -164,7 +172,7 @@ function create() {
     196, 5764,
     "npcScooter",
     60,
-    [{x:876,y:5542}, {x:1401,y:5424}, {x:1985,y:5276}, {x:2584,y:5143}, {x:2961,y:5069}, {x:3212,y:5217}, {x:3338,y:5461}, {x:3405,y:5668}, {x:3523,y:6200}, {x:3708,y:7250},{x:3841,y:7938}]
+    [{ x: 876, y: 5542 }, { x: 1401, y: 5424 }, { x: 1985, y: 5276 }, { x: 2584, y: 5143 }, { x: 2961, y: 5069 }, { x: 3212, y: 5217 }, { x: 3338, y: 5461 }, { x: 3405, y: 5668 }, { x: 3523, y: 6200 }, { x: 3708, y: 7250 }, { x: 3841, y: 7938 }]
   );
 
   let scooter2 = spawnNPC(
@@ -172,7 +180,7 @@ function create() {
     1306, 95,
     "npcScooter",
     50,
-    [{x:1493,y:535}, {x:1712,y:1003}, {x:2007,y:1661}, {x:2281,y:2215}, {x:2397,y:2511}, {x:2554,y:2903}, {x:2554,y:3199}, {x:2436,y:3413},{x:2185,y:3576}, {x:1667,y:3797}, {x:1150,y:3953}, {x:440,y:4189},{x:41,y:4330}]
+    [{ x: 1493, y: 535 }, { x: 1712, y: 1003 }, { x: 2007, y: 1661 }, { x: 2281, y: 2215 }, { x: 2397, y: 2511 }, { x: 2554, y: 2903 }, { x: 2554, y: 3199 }, { x: 2436, y: 3413 }, { x: 2185, y: 3576 }, { x: 1667, y: 3797 }, { x: 1150, y: 3953 }, { x: 440, y: 4189 }, { x: 41, y: 4330 }]
   );
 
   let scooter3 = spawnNPC(
@@ -180,21 +188,33 @@ function create() {
     1472, 74,
     "npcScooter",
     45,
-    [{x:1839,y:874}, {x:2266,y:1853}, {x:2547,y:2496}, {x:2695,y:3132}, {x:2695,y:3642}, {x:2628,y:4160}, {x:2547,y:4707}, {x:2517,y:4900}, {x:2547,y:4960}, {x:2589,y:4960}, {x:2667,y:4946}, {x:2756,y:4926}, {x:3126,y:4844}, {x:3583,y:4756}, {x:4016,y:4595}, {x:4302,y:4443}, {x:4584,y:4160}, {x:4981,y:3806}, {x:5438,y:3409}, {x:5890,y:2994}, {x:6550,y:2361}, {x:7076,y:1853}, {x:7980,y:1065},]
+    [{ x: 1839, y: 874 }, { x: 2266, y: 1853 }, { x: 2547, y: 2496 }, { x: 2695, y: 3132 }, { x: 2695, y: 3642 }, { x: 2628, y: 4160 }, { x: 2547, y: 4707 }, { x: 2517, y: 4900 }, { x: 2547, y: 4960 }, { x: 2589, y: 4960 }, { x: 2667, y: 4946 }, { x: 2756, y: 4926 }, { x: 3126, y: 4844 }, { x: 3583, y: 4756 }, { x: 4016, y: 4595 }, { x: 4302, y: 4443 }, { x: 4584, y: 4160 }, { x: 4981, y: 3806 }, { x: 5438, y: 3409 }, { x: 5890, y: 2994 }, { x: 6550, y: 2361 }, { x: 7076, y: 1853 }, { x: 7980, y: 1065 },]
   );
 
 
   // 玩家
-  START_X = MAP_SIZE-3000;
+  START_X = MAP_SIZE - 3000;
   START_Y = MAP_SIZE;
   const params = new URLSearchParams(window.location.search);
+  if (params.get('selectedIndex') == 0) {
+    player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Bus").setOrigin(0.5, 0.5).setScale(0.22);
 
-  player = this.add.rectangle(
-    START_X * MAP_SCALE,
-    START_Y * MAP_SCALE,
-    80, 40,
-    0x00bfff
-  );
+
+  } else if (params.get('selectedIndex') == 1) {
+    player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Car").setOrigin(0.5, 0.5).setScale(0.05);
+
+
+  } else if (params.get('selectedIndex') == 2) {
+    player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Scooter").setOrigin(0.5, 0.5).setScale(0.05);
+
+
+  }
+  // player = this.add.rectangle(
+  //   START_X * MAP_SCALE,
+  //   START_Y * MAP_SCALE,
+  //   80, 40,
+  //   0x00bfff
+  // );
   this.physics.add.existing(player);
   //player.rotation = Phaser.Math.DegToRad(90); // 朝下
 
@@ -218,6 +238,22 @@ function create() {
     .setScale(0.08)
     .setOrigin(0.5, 0.5);
 
+    // 小地圖遮罩
+  this.maskSprite = this.add.image(0, 0, "MiniMapMask")
+    .setOrigin(0, 0)
+    .setScale(0.5)
+    .setScrollFactor(0)
+    .setDepth(999)
+    .setVisible(false);
+
+    // 建立 Bitmap Mask
+    this.mask = this.maskSprite.createBitmapMask();
+
+    // 套用遮罩
+    miniPlayer.setMask(this.mask);
+
+
+
   // ----------------------------------------------------
   // 10. 生命值
   // ----------------------------------------------------
@@ -226,7 +262,7 @@ function create() {
     .setOrigin(1, 0)
     .setScrollFactor(0)
     .setDepth(9999)
-    .setScale(0.5);
+    .setScale(0.3);
 
   // 監聽視窗縮放
   this.scale.on('resize', (gameSize) => {
@@ -278,8 +314,8 @@ function update(time, delta) {
   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
 
   // 預測下一個位置（縮放後座標）
-  let nextX = player.x + Math.cos(player.rotation) * speed;
-let nextY = player.y + Math.sin(player.rotation) * speed;
+  let nextX = player.x + Math.cos(player.rotation - CAR_ANGLE_OFFSET) * speed;
+  let nextY = player.y + Math.sin(player.rotation - CAR_ANGLE_OFFSET) * speed;
 
   // Pixel collision（轉回原圖座標）
   let maskX = nextX / MAP_SCALE;
@@ -289,8 +325,8 @@ let nextY = player.y + Math.sin(player.rotation) * speed;
     hitWallPixel(player);
   } else {
     player.body.setVelocity(
-      Math.cos(player.rotation) * speed,
-      Math.sin(player.rotation) * speed
+      Math.cos(player.rotation - CAR_ANGLE_OFFSET) * speed,
+      Math.sin(player.rotation - CAR_ANGLE_OFFSET) * speed
     );
   }
 
@@ -303,8 +339,8 @@ let nextY = player.y + Math.sin(player.rotation) * speed;
   if (positionHistory.length > 60) positionHistory.shift();
 
   // 小地圖更新
-  miniPlayer.x = 100 + (player.x / WORLD_SIZE) * 100;
-  miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
+  miniPlayer.x = (player.x / WORLD_SIZE) * this.smallMap2img.width * this.smallMap2img.scaleX;
+  miniPlayer.y = (player.y / WORLD_SIZE) * this.smallMap2img.height * this.smallMap2img.scaleY;
   miniPlayer.rotation = player.rotation;
   // miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
 
@@ -526,7 +562,7 @@ function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000,
 
   obj.hud = scene.add.image(midX, midY, "lightRed")
     .setScale(0.25)
-    .setDepth(9999);
+    .setDepth(998);
 
   obj.hud.rotation = obj.angle; // 跟紅線一樣角度
 
@@ -677,7 +713,8 @@ function createGoalLine(x1, y1, x2, y2, segments = 20) {
       player.body.setVelocity(0, 0);
 
       // 跳下一關
-      window.location.href = "level2.html";
+      // window.location.href = "level2.html";
+      alert(`完成此關卡`);
     });
   }
 }

@@ -22,7 +22,7 @@ let player;
 let speed = 0;
 let maxSpeed = 300;
 let acceleration = 0.05;
-let turnSpeed = 3;
+let turnSpeed = 1;
 let keys;
 
 // ==========================

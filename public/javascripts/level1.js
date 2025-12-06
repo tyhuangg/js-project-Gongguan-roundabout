@@ -19,7 +19,7 @@ const MAP_SCALE = 0.25;
 let WORLD_SIZE = MAP_SIZE * MAP_SCALE;
 
 let player, keys, miniPlayer;
-let speed = 0, maxSpeed = 120, acceleration = 0.05, turnSpeed = 3;
+let speed = 0, maxSpeed = 120, acceleration = 0.05, turnSpeed = 1;
 
 let positionHistory = [];
 let isInvincible = false;
@@ -30,6 +30,8 @@ let maskCanvas, maskCtx;
 //玩家位置
 let START_X = 0;
 let START_Y = 0;
+//玩家選車
+let selectcar_player = 0;
 
 // 兩道紅燈牆
 let trafficLights = [];
@@ -43,6 +45,7 @@ const CAR_ANGLE_OFFSET = Phaser.Math.DegToRad(90);
 // ======================================================
 function preload() {
   this.load.image("smallMap", "/image/map/circle_small_map.png");
+  this.load.image("MiniMapMask", "/image/map/MiniMapMask.png");
   this.load.image("colorMap", "/image/map/circle_map.png");
   this.load.image("mask", "/image/map/Circle_map_WB.PNG");
   this.load.image("heart3", "/image/ui/Heart/3heart.png");
@@ -94,7 +97,7 @@ function create() {
   // ----------------------------------------------------
   // 3. 左上角小地圖
   // ----------------------------------------------------
-  this.add.image(0, 0, "smallMap")
+  this.smallMapimg=this.add.image(0, 0, "smallMap")
     .setOrigin(0, 0)
     .setScale(0.5)
     .setScrollFactor(0)
@@ -109,7 +112,7 @@ function create() {
   // ----------------------------------------------------
   // 5. NPCs
   // ----------------------------------------------------
-let bus1 = spawnNPC(
+  let bus1 = spawnNPC(
     this,
     4823, 7735,
     "npcBus",
@@ -131,7 +134,7 @@ let bus1 = spawnNPC(
     "npcBus",
     60,
     [
-      {x:5298,y:3001}, {x:4493,y:2633}, {x:2861,y:3118}, {x:2503,y:3737}, {x:1127,y:4305}, {x:0,y:4897}
+      { x: 5298, y: 3001 }, { x: 4493, y: 2633 }, { x: 2861, y: 3118 }, { x: 2503, y: 3737 }, { x: 1127, y: 4305 }, { x: 0, y: 4897 }
     ]
   );
   let bus3 = spawnNPC(
@@ -140,7 +143,7 @@ let bus1 = spawnNPC(
     "npcBus",
     60,
     [
-      {x:2615,y:4837}, {x:3227,y:5297}, {x:3919,y:5373}, {x:4629,y:5150}, {x:5181,y:4739}, {x:5963,y:4405}, {x:8000,y:4024}
+      { x: 2615, y: 4837 }, { x: 3227, y: 5297 }, { x: 3919, y: 5373 }, { x: 4629, y: 5150 }, { x: 5181, y: 4739 }, { x: 5963, y: 4405 }, { x: 8000, y: 4024 }
     ]
   );
   let bus4 = spawnNPC(
@@ -149,7 +152,7 @@ let bus1 = spawnNPC(
     "npcBus",
     60,
     [
-      {x:2078,y:5589}, {x:2802,y:5884}, {x:3359,y:6167}, {x:3725,y:6453}, {x:3860,y:6724}, {x:4193,y:8000}
+      { x: 2078, y: 5589 }, { x: 2802, y: 5884 }, { x: 3359, y: 6167 }, { x: 3725, y: 6453 }, { x: 3860, y: 6724 }, { x: 4193, y: 8000 }
     ]
   );
 
@@ -188,7 +191,7 @@ let bus1 = spawnNPC(
     ]
   );
 
-    let car3 = spawnNPC(
+  let car3 = spawnNPC(
     this,
     3733, 4930,
     "npcCar",
@@ -253,13 +256,15 @@ let bus1 = spawnNPC(
 
   if (params.get('selectedIndex') == 0) {
     player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Bus").setOrigin(0.5, 0.5).setScale(0.22);
+    selectcar_player = 0;
 
   } else if (params.get('selectedIndex') == 1) {
     player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Car").setOrigin(0.5, 0.5).setScale(0.05);
+    selectcar_player = 1;
 
   } else if (params.get('selectedIndex') == 2) {
     player = this.add.image(START_X * MAP_SCALE, START_Y * MAP_SCALE, "Scooter").setOrigin(0.5, 0.5).setScale(0.05);
-
+    selectcar_player = 2;
   }
 
   //原綠色player
@@ -308,6 +313,22 @@ let bus1 = spawnNPC(
     .setOrigin(0.5, 0.5);  // 讓旋轉以中心點
 
 
+
+    // 小地圖遮罩
+  this.maskSprite = this.add.image(0, 0, "MiniMapMask")
+    .setOrigin(0, 0)
+    .setScale(0.5)
+    .setScrollFactor(0)
+    .setDepth(999)
+    .setVisible(false);
+
+    // 建立 Bitmap Mask
+    this.mask = this.maskSprite.createBitmapMask();
+
+    // 套用遮罩
+    miniPlayer.setMask(this.mask);
+
+
   // ----------------------------------------------------
   // 10. 生命值
   // ----------------------------------------------------
@@ -316,7 +337,7 @@ let bus1 = spawnNPC(
     .setOrigin(1, 0)
     .setScrollFactor(0)
     .setDepth(9999)
-    .setScale(0.5);
+    .setScale(0.3);
 
   // 監聽視窗縮放
   this.scale.on('resize', (gameSize) => {
@@ -362,8 +383,8 @@ function update() {
   speed = Phaser.Math.Linear(speed, targetSpeed, acceleration);
 
   // 預測下一個位置（縮放後座標）
-  let nextX = player.x + Math.cos(player.rotation-CAR_ANGLE_OFFSET) * speed;
-  let nextY = player.y + Math.sin(player.rotation-CAR_ANGLE_OFFSET) * speed;
+  let nextX = player.x + Math.cos(player.rotation - CAR_ANGLE_OFFSET) * speed;
+  let nextY = player.y + Math.sin(player.rotation - CAR_ANGLE_OFFSET) * speed;
 
   // Pixel collision（轉回原圖座標）
   let maskX = nextX / MAP_SCALE;
@@ -373,8 +394,8 @@ function update() {
     hitWallPixel(player);
   } else {
     player.body.setVelocity(
-      Math.cos(player.rotation-CAR_ANGLE_OFFSET) * speed,
-      Math.sin(player.rotation-CAR_ANGLE_OFFSET) * speed
+      Math.cos(player.rotation - CAR_ANGLE_OFFSET) * speed,
+      Math.sin(player.rotation - CAR_ANGLE_OFFSET) * speed
     );
   }
 
@@ -387,10 +408,12 @@ function update() {
   if (positionHistory.length > 60) positionHistory.shift();
 
   // 小地圖更新
-  miniPlayer.x = 100 + (player.x / WORLD_SIZE) * 100;
-  miniPlayer.y = 100 + (player.y / WORLD_SIZE) * 100;
+  miniPlayer.x =  (player.x / WORLD_SIZE) * this.smallMapimg.width * this.smallMapimg.scaleX;
+  miniPlayer.y = (player.y / WORLD_SIZE) * this.smallMapimg.height * this.smallMapimg.scaleY;
   miniPlayer.rotation = player.rotation;
   // miniPlayer.rotation = player.rotation + Phaser.Math.DegToRad(90);
+
+  
 
   // 紅燈牆 HUD 更新
   updateTrafficHUD();
@@ -630,7 +653,7 @@ function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000,
 
   obj.hud = scene.add.image(midX + 30, midY - 30, "redLightIcon")
     .setScale(0.15)
-    .setDepth(9999)
+    .setDepth(998)
     .setAngle(angle);  // 🔥 完全跟線同角度（方案 A）
 
   // ----------------------------------------------------
@@ -786,7 +809,7 @@ function createGoalLine(x1, y1, x2, y2, segments = 20) {
       player.body.setVelocity(0, 0);
 
       // 跳下一關
-      window.location.href = "level2.html";
+      window.location.href = "level2.html?selectedIndex=" + selectcar_player;
     });
   }
 }
