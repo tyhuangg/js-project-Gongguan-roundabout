@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
@@ -13,6 +13,33 @@
   <script src="javascripts/select.js"></script>
 </head>
 <body>
-  <script  src="/javascripts/level1.js"></script>
+  <script  src="javascripts/level1.js"></script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Level 1</title>
+
+  <!-- Phaser 必須永遠最先載 -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+
+  <link rel="stylesheet" href="/stylesheets/style.css" />
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ⚠️ 刪掉 select.js，不需要在 Level1 載入 -->
+  <!-- 不要這個：<script src="javascripts/select.js"></script> -->
+
+  <!-- Level1 遊戲主程式 -->
+  <script src="javascripts/level1.js"></script>
 </body>
 </html>

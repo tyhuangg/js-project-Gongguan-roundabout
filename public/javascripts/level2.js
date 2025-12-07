@@ -714,7 +714,9 @@ function createGoalLine(x1, y1, x2, y2, segments = 20) {
 
       // 跳下一關
       // window.location.href = "level2.html";
-      alert(`完成此關卡`);
+      // alert(`完成此關卡`);
+      // 直接跳到 conclusion 頁面
+      window.location.href = "/conclusion";
     });
   }
 }
