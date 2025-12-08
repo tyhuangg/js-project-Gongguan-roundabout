@@ -62,7 +62,6 @@ function drawBackground() {
 // 按鈕
 //===========================
 function updateButtonPosition() {
-  // 用畫面比例控制位置（不再用 drawW/drawH，避免跑位）
   btnX = width * 0.5;
   btnY = height * 0.8;
 }

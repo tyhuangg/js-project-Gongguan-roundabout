@@ -282,7 +282,6 @@ function create() {
   this.graphics = this.add.graphics();
   //建立兩道紅燈牆（可分別設定紅綠燈時間）
   createTrafficLightApprox.call(this, 1181, 1357, 1000, 1390, 15, 5000, 3000); // 第一道
-  createTrafficLightApprox.call(this, 443, 913, 470, 1026, 15, 7000, 2000);  // 第二道
 
   // 目標線
   createGoalLine.call(this, 1203, 4099, 1455, 4685, 20);
@@ -713,10 +712,7 @@ function createGoalLine(x1, y1, x2, y2, segments = 20) {
       player.body.setVelocity(0, 0);
 
       // 跳下一關
-      // window.location.href = "level2.html";
-      // alert(`完成此關卡`);
-      // 直接跳到 conclusion 頁面
-      window.location.href = "/conclusion";
+      window.location.href = "/position";
     });
   }
 }
