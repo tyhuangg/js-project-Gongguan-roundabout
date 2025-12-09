@@ -61,6 +61,9 @@ function preload() {
   this.load.image("Scooter", "/image/car_top/scooter_top.png");
   this.load.image("redLightIcon", "/image/ui/redgreenlight/RedGreenLight_3Light_Red.png");
   this.load.image("greenLightIcon", "/image/ui/redgreenlight/RedGreenLight_3Light_Green.png");
+  this.load.audio("bgm", "/audio/level1_background_music.wav");
+  this.load.audio("hit", "/audio/hit.wav");
+  this.load.audio("lose", "/audio/lose.wav");
 }
 
 
@@ -361,6 +364,14 @@ function create() {
 
   // 目標線
   createGoalLine.call(this, 1203, 4099, 1455, 4685, 20);
+
+  //音樂
+  this.bgm = this.sound.add("bgm", {
+    loop: true,     // 是否循環播放
+    volume: 0.5     // 音量 0~1
+  });
+
+  this.bgm.play();  // ← 播放背景音樂
 }
 
 
@@ -551,6 +562,7 @@ function hitWallPixel(player) {
   // 扣一滴血
   scene.hp--;
   scene.updateHeart();
+  scene.sound.play("hit");
 
   // 檢查是否死亡
   if (scene.hp <= 0) {
@@ -560,6 +572,7 @@ function hitWallPixel(player) {
     player.y = START_Y * MAP_SCALE;
     // player.rotation = Phaser.Math.DegToRad(90);
     player.body.reset(player.x, player.y);
+    scene.sound.play("lose");
 
     // 重置 HP
     scene.hp = 3;
@@ -666,7 +679,7 @@ function createTrafficLightApprox(x1, y1, x2, y2, segments = 10, redTime = 5000,
       state === "red" ? "redLightIcon" : "greenLightIcon"
     );
 
-    obj.hud.setAngle(angle);   // 🔥 切換時保持同角度
+    obj.hud.setAngle(angle);
 
     obj.colliders.forEach(c => c.active = (state === 'red'));
   }
@@ -726,8 +739,8 @@ function onPlayerHitNPC(player, npc) {
   // 扣血
   scene.hp--;
   scene.updateHeart();
+  scene.sound.play("hit");
 
-  // 撞 NPC 跟撞牆一樣：給無敵時間
   isInvincible = true;
 
   // 撞到時閃爍
@@ -807,6 +820,8 @@ function createGoalLine(x1, y1, x2, y2, segments = 20) {
 
       // 停下來
       player.body.setVelocity(0, 0);
+      scene.bgm.stop();
+
 
       // 跳下一關
       window.location.href = "level2.html?selectedIndex=" + selectcar_player;

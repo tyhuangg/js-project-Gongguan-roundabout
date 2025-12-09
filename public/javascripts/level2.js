@@ -65,6 +65,9 @@ function preload() {
   this.load.image("arrow", "/image/ui/Arrow.png");
   this.load.image("lightGreen", "/image/ui/redgreenlight/RedGreenLight_3Light_Green.png");
   this.load.image("lightRed", "/image/ui/redgreenlight/RedGreenLight_3Light_Red.png");
+  this.load.audio("bgm", "/audio/level1_background_music.wav");
+  this.load.audio("hit", "/audio/hit.wav");
+  this.load.audio("lose", "/audio/lose.wav");
 }
 
 
@@ -285,6 +288,14 @@ function create() {
 
   // 目標線
   createGoalLine.call(this, 1203, 4099, 1455, 4685, 20);
+
+  //音樂
+  this.bgm = this.sound.add("bgm", {
+    loop: true,     // 是否循環播放
+    volume: 0.5     // 音量 0~1
+  });
+
+  this.bgm.play();  // ← 播放背景音樂
 }
 
 
@@ -475,6 +486,7 @@ function hitWallPixel(player) {
   // 扣一滴血
   scene.hp--;
   scene.updateHeart();
+  scene.sound.play("hit", { volume: 0.5 });
 
   // 檢查是否死亡
   if (scene.hp <= 0) {
@@ -484,6 +496,7 @@ function hitWallPixel(player) {
     player.y = START_Y * MAP_SCALE;
     // player.rotation = Phaser.Math.DegToRad(90);
     player.body.reset(player.x, player.y);
+    scene.sound.play("lose", { volume: 0.5 });
 
     // 重置 HP
     scene.hp = 3;
@@ -629,6 +642,7 @@ function onPlayerHitNPC(player, npc) {
   // 扣血
   scene.hp--;
   scene.updateHeart();
+  scene.sound.play("hit", { volume: 0.5 });
 
   // 撞 NPC 跟撞牆一樣：給無敵時間
   isInvincible = true;
@@ -710,8 +724,9 @@ function createGoalLine(x1, y1, x2, y2, segments = 20) {
 
       // 停下來
       player.body.setVelocity(0, 0);
+      scene.bgm.stop();
 
-      // 跳下一關
+      // 跳下一頁
       window.location.href = "/position";
     });
   }

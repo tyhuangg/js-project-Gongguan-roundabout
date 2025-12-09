@@ -23,6 +23,7 @@ let btnImg;
 let btnW = 350;
 let btnH;
 let btnX, btnY; // 中心座標
+let buttonSound;
 
 let startFrame;
 let lines = [];
