@@ -29,112 +29,32 @@
 ```
 js-project-Gongguan-roundabout/
 ├─ bin/
-│  └─ www
+│  └─ www                      # Express server entry
 ├─ public/
-│  ├─ image/
-│  │  ├─ bg/
-│  │  │  ├─ BackGround_Frame1.png
-│  │  │  ├─ Background_Frame3_11_12_13_14.png
-│  │  │  ├─ Conclusion.png
-│  │  │  ├─ hero.jpg
-│  │  │  ├─ intro.jpg
-│  │  │  └─ tutorial.jpg
-│  │  ├─ car_side/
-│  │  │  ├─ bus_side.png
-│  │  │  ├─ car_side.png
-│  │  │  └─ scooter_side.png
-│  │  ├─ car_top/
-│  │  │  ├─ bus_top.png
-│  │  │  ├─ car_top.png
-│  │  │  └─ scooter_top.png
-│  │  ├─ map/
-│  │  │  ├─ Circle_map_B.PNG
-│  │  │  ├─ Circle_map_W.PNG
-│  │  │  ├─ Circle_map_WB.PNG
-│  │  │  ├─ circle_map.png
-│  │  │  ├─ circle_small_map.png
-│  │  │  ├─ MiniMapMask.png
-│  │  │  ├─ Orthogonal_map_WB.png
-│  │  │  ├─ Orthogonal_map.png
-│  │  │  ├─ Orthogonal_small_map.png
-│  │  │  ├─ partice_map_WB.png
-│  │  │  └─ partice_map.png
-│  │  ├─ npc_car_top/
-│  │  │  ├─ npc_bus_top.png
-│  │  │  ├─ npc_car_top.png
-│  │  │  └─ npc_scooter_top.png
-│  │  └─ ui/
-│  │     ├─ Heart/
-│  │     │  ├─ 1heart.png
-│  │     │  ├─ 2heart.png
-│  │     │  ├─ 3heart.png
-│  │     │  └─ noheart.png
-│  │     ├─ keyboard/
-│  │     │  ├─ Keyboard-down-dark.png
-│  │     │  ├─ Keyboard-down-light.png
-│  │     │  ├─ Keyboard-left-dark.png
-│  │     │  ├─ Keyboard-left-light.png
-│  │     │  ├─ Keyboard-right-dark.png
-│  │     │  ├─ Keyboard-right-light.png
-│  │     │  ├─ Keyboard-up-dark.png
-│  │     │  └─ Keyboard-up-light.png
-│  │     ├─ redgreenlight/
-│  │     │  ├─ RedGreenLight_3Light_Green.png
-│  │     │  ├─ RedGreenLight_3Light_Red.png
-│  │     │  └─ RedGreenLight_3Light_Yellow.png
-│  │     ├─ select_road/
-│  │     │  ├─ Choose_01.png
-│  │     │  └─ Choose_02.png
-│  │     ├─ Arrow.png
-│  │     ├─ BackMainCanva.png
-│  │     ├─ ChatBox.png
-│  │     ├─ Choose_01.png
-│  │     ├─ Choose_02.png
-│  │     ├─ Choose_03.png
-│  │     ├─ finsh.png
-│  │     ├─ Keyboard.png
-│  │     ├─ List of Members.png
-│  │     ├─ next.png
-│  │     ├─ start_teach.png
-│  │     ├─ start_tutorial.png
-│  │     └─ TopMask.png
-│  ├─ javascripts/
-│  │  ├─ carbasic.js
-│  │  ├─ conclusion.js
-│  │  ├─ ImageButton.js
-│  │  ├─ index.js
-│  │  ├─ level1.js
-│  │  ├─ level2.js
-│  │  ├─ p5-intro.js
-│  │  ├─ p5-tutorial.js
-│  │  ├─ p5.welcome.js
-│  │  ├─ roles.js
-│  │  ├─ select.js
-│  │  ├─ teach.js
-│  │  ├─ tlightlevel1.js
-│  │  └─ tutorial.js
+│  ├─ image/                   # All visual assets
+│  │  ├─ bg/                   # Backgrounds & story screens
+│  │  ├─ car_side/             # Player vehicle (side view)
+│  │  ├─ car_top/              # Player vehicle (top view)
+│  │  ├─ npc_car_top/          # NPC vehicles
+│  │  ├─ map/                  # Main map, minimap & masks
+│  │  └─ ui/                   # UI elements (HUD, keyboard, lights)
+│  ├─ javascripts/             # Game logic (Phaser / p5.js)
+│  │  ├─ index.js              # Main entry logic
+│  │  ├─ level1.js / level2.js # Core gameplay scenes
+│  │  ├─ select.js             # Vehicle & role selection
+│  │  ├─ tlightlevel1.js       # Traffic light logic
+│  │  ├─ p5-*.js               # Intro / tutorial animations
+│  │  └─ *.js                  # UI & helper modules
 │  ├─ stylesheets/
 │  │  └─ style.css
-│  ├─ carbasic.html
-│  ├─ conclusion.html
-│  ├─ index.html
-│  ├─ intro.html
-│  ├─ level1.html
-│  ├─ level2.html
-│  ├─ position_selection.html
-│  ├─ select.html
-│  ├─ teach.html
-│  └─ tutorial.html
-├─ routes/
+│  ├─ *.html                   # Scene-based pages
+├─ routes/                     # Express routes
 │  ├─ index.js
 │  └─ users.js
-├─ .gitignore
-├─ .Rhistory
-├─ app.js
-├─ package-lock.json
+├─ app.js                      # Express app setup
 ├─ package.json
+├─ package-lock.json
 └─ README.md
-
 ```
 
 ---
@@ -179,24 +99,21 @@ npx serve
 
 ---
 
-## 👤 Author
+## 👥 Authors & Contributions
 
 本專案為課程專案，由修課學生共同完成。
 
-Core Development / Main Programmer
+**Core Development / Main Programmer**
 
-黃婷筠（主要負責核心遊戲邏輯、系統整合與程式實作）
+* **黃婷筠**（主要負責核心遊戲邏輯、系統整合與程式實作）
 
-Team Members
+**Team Members**
 
-陳采霓
+* 陳采霓
+* 鄭勻禎
+* 謝誼泓
+* 廖語岑
+* 胡乃云
+* 蕭向喆
 
-鄭勻禎
-
-謝誼泓
-
-廖語岑
-
-胡乃云
-
-蕭向喆
+> Team members contributed to ideation, UI/UX design, asset preparation, testing, and course-related deliverables.
