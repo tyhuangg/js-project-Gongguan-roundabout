@@ -27,18 +27,114 @@
 ## 📁 專案結構
 
 ```
-project-root/
-├── index.html              # 遊戲入口
-├── javascripts/
-│   ├── level1.js           # 主遊戲邏輯（地圖、玩家、NPC、號誌）
-│   └── select.js           # 車種選擇與狀態儲存
-├── image/
-│   ├── map/                # 主地圖與像素遮罩
-│   ├── cars/               # 玩家與 NPC 車輛素材
-│   └── ui/                 # 小地圖、介面元素
-├── stylesheets/
-│   └── style.css
-└── README.md
+js-project-Gongguan-roundabout/
+├─ bin/
+│  └─ www
+├─ public/
+│  ├─ image/
+│  │  ├─ bg/
+│  │  │  ├─ BackGround_Frame1.png
+│  │  │  ├─ Background_Frame3_11_12_13_14.png
+│  │  │  ├─ Conclusion.png
+│  │  │  ├─ hero.jpg
+│  │  │  ├─ intro.jpg
+│  │  │  └─ tutorial.jpg
+│  │  ├─ car_side/
+│  │  │  ├─ bus_side.png
+│  │  │  ├─ car_side.png
+│  │  │  └─ scooter_side.png
+│  │  ├─ car_top/
+│  │  │  ├─ bus_top.png
+│  │  │  ├─ car_top.png
+│  │  │  └─ scooter_top.png
+│  │  ├─ map/
+│  │  │  ├─ Circle_map_B.PNG
+│  │  │  ├─ Circle_map_W.PNG
+│  │  │  ├─ Circle_map_WB.PNG
+│  │  │  ├─ circle_map.png
+│  │  │  ├─ circle_small_map.png
+│  │  │  ├─ MiniMapMask.png
+│  │  │  ├─ Orthogonal_map_WB.png
+│  │  │  ├─ Orthogonal_map.png
+│  │  │  ├─ Orthogonal_small_map.png
+│  │  │  ├─ partice_map_WB.png
+│  │  │  └─ partice_map.png
+│  │  ├─ npc_car_top/
+│  │  │  ├─ npc_bus_top.png
+│  │  │  ├─ npc_car_top.png
+│  │  │  └─ npc_scooter_top.png
+│  │  └─ ui/
+│  │     ├─ Heart/
+│  │     │  ├─ 1heart.png
+│  │     │  ├─ 2heart.png
+│  │     │  ├─ 3heart.png
+│  │     │  └─ noheart.png
+│  │     ├─ keyboard/
+│  │     │  ├─ Keyboard-down-dark.png
+│  │     │  ├─ Keyboard-down-light.png
+│  │     │  ├─ Keyboard-left-dark.png
+│  │     │  ├─ Keyboard-left-light.png
+│  │     │  ├─ Keyboard-right-dark.png
+│  │     │  ├─ Keyboard-right-light.png
+│  │     │  ├─ Keyboard-up-dark.png
+│  │     │  └─ Keyboard-up-light.png
+│  │     ├─ redgreenlight/
+│  │     │  ├─ RedGreenLight_3Light_Green.png
+│  │     │  ├─ RedGreenLight_3Light_Red.png
+│  │     │  └─ RedGreenLight_3Light_Yellow.png
+│  │     ├─ select_road/
+│  │     │  ├─ Choose_01.png
+│  │     │  └─ Choose_02.png
+│  │     ├─ Arrow.png
+│  │     ├─ BackMainCanva.png
+│  │     ├─ ChatBox.png
+│  │     ├─ Choose_01.png
+│  │     ├─ Choose_02.png
+│  │     ├─ Choose_03.png
+│  │     ├─ finsh.png
+│  │     ├─ Keyboard.png
+│  │     ├─ List of Members.png
+│  │     ├─ next.png
+│  │     ├─ start_teach.png
+│  │     ├─ start_tutorial.png
+│  │     └─ TopMask.png
+│  ├─ javascripts/
+│  │  ├─ carbasic.js
+│  │  ├─ conclusion.js
+│  │  ├─ ImageButton.js
+│  │  ├─ index.js
+│  │  ├─ level1.js
+│  │  ├─ level2.js
+│  │  ├─ p5-intro.js
+│  │  ├─ p5-tutorial.js
+│  │  ├─ p5.welcome.js
+│  │  ├─ roles.js
+│  │  ├─ select.js
+│  │  ├─ teach.js
+│  │  ├─ tlightlevel1.js
+│  │  └─ tutorial.js
+│  ├─ stylesheets/
+│  │  └─ style.css
+│  ├─ carbasic.html
+│  ├─ conclusion.html
+│  ├─ index.html
+│  ├─ intro.html
+│  ├─ level1.html
+│  ├─ level2.html
+│  ├─ position_selection.html
+│  ├─ select.html
+│  ├─ teach.html
+│  └─ tutorial.html
+├─ routes/
+│  ├─ index.js
+│  └─ users.js
+├─ .gitignore
+├─ .Rhistory
+├─ app.js
+├─ package-lock.json
+├─ package.json
+└─ README.md
+
 ```
 
 ---
@@ -85,7 +181,22 @@ npx serve
 
 ## 👤 Author
 
-**黃婷筠**
-National Chengchi University, Department of Management Information Systems
+本專案為課程專案，由修課學生共同完成。
 
-如果你對這個專案或相關技術細節有興趣，歡迎交流！
+Core Development / Main Programmer
+
+黃婷筠（主要負責核心遊戲邏輯、系統整合與程式實作）
+
+Team Members
+
+陳采霓
+
+鄭勻禎
+
+謝誼泓
+
+廖語岑
+
+胡乃云
+
+蕭向喆
